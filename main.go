@@ -1,59 +1,41 @@
 package main
 
 import (
-	"backend/controllers"
-	"backend/database"
-
-	// "backend/models"
+	"backend/internal/db"
+	"backend/internal/models"
+	"backend/internal/routers"
 	"fmt"
+	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 	"log"
 	"net/http"
-
-	"github.com/gorilla/mux"
-	"github.com/gorilla/websocket"
 )
 
-var Upgrader = websocket.Upgrader{}
-
 func main() {
-	database.Conection()
-	/*err1 := database.DB.AutoMigrate(
-		&models.ReporteError{},
-		&models.Ruta{},
-		&models.Medidor{},
-		&models.Lecturador{},
-		&models.Administrador{},
-		&models.Lecturacion{},
-	)
-	if err1 != nil {
-		log.Println("Error al migrar los modelos de la db")
-		return
-	}*/
+	var err error
 	port := "5000"
-	fmt.Println("Corriendo")
 	r := mux.NewRouter()
-	r.Use(loggingHandler)
-	r.HandleFunc("/", Home)
-	r.HandleFunc("/api/persona", controllers.GetPersonasHandle).Methods(http.MethodGet)
-	r.HandleFunc("/api/persona", controllers.PostPersonasHandle).Methods(http.MethodPost)
-	r.HandleFunc("/api/medidor", controllers.GetMedidores).Methods(http.MethodGet)
-	r.HandleFunc("/api/medidor/{codmedidor}", controllers.GetMedidor).Methods(http.MethodGet)
-	r.HandleFunc("/api/medidor", controllers.PostMedidor).Methods(http.MethodPost)
-	r.HandleFunc("/ws/medidor", controllers.ObtenerMedidoresWS)
-	http.Handle("/", r)
-	// ":" = localhost
-	err := http.ListenAndServe(":"+port, r)
+	// Cargar el archivo .env
+	if err := godotenv.Load(".env"); err != nil {
+		log.Fatal("Error al cargar el archivo .env")
+	}
+	// Conectar a la base de datos
+	err = db.Connection()
 	if err != nil {
+		log.Printf("Error al cargar la base de datos: %v", err)
 		return
 	}
-}
-
-func Home(w http.ResponseWriter, r *http.Request) {
-	log.Println("Principal")
-}
-func loggingHandler(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		next.ServeHTTP(w, r)
-	})
+	// Migrar los modelos
+	if err := db.GDB.AutoMigrate(&models.ReporteError{}, &models.Ruta{}, &models.Medidor{},
+		&models.Lecturador{}, &models.Administrador{}, &models.Lecturacion{},
+	); err != nil {
+		log.Fatal("Error al migrar los modelos de la db:", err)
+	}
+	// Cargar endPoints
+	routers.InitEndPoints(r)
+	// Iniciar el servidor
+	fmt.Printf("Servidor corriendo en puerto: %s\n", port)
+	if err := http.ListenAndServe(":"+port, r); err != nil {
+		log.Fatal("Error al iniciar el servidor:", err)
+	}
 }
