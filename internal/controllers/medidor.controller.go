@@ -38,7 +38,7 @@ func ObtenerMedidores(w http.ResponseWriter, r *http.Request) {
 
 func ObtenerMedidor(w http.ResponseWriter, r *http.Request) {
 	var medidor models.Medidor
-	codigoMedidor := mux.Vars(r)["codmedidor"]
+	codigoMedidor := mux.Vars(r)["cod"]
 
 	// Llamar al servicio para obtener un medidor por su código
 	if err := services.Medidor.GetByCod(&medidor, codigoMedidor); err != nil {
@@ -86,7 +86,7 @@ func PostMedidor(w http.ResponseWriter, r *http.Request) {
 }
 
 func EliminarMedidor(w http.ResponseWriter, r *http.Request) {
-	codigoMedidor := mux.Vars(r)["codmedidor"]
+	codigoMedidor := mux.Vars(r)["cod"]
 
 	// Llamar al servicio para marcar el medidor como inactivo
 	if err := services.Medidor.Delete(codigoMedidor); err != nil {
