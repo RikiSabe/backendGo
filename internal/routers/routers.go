@@ -3,8 +3,9 @@ package routers
 import (
 	c "backend/internal/controllers"
 	"backend/internal/middleware"
-	"github.com/gorilla/mux"
 	"net/http"
+
+	"github.com/gorilla/mux"
 )
 
 func InitEndPoints(r *mux.Router) {
@@ -27,8 +28,9 @@ func endPointsAPI(api *mux.Router) {
 
 	//v1 Medidores
 	v1Medidores.HandleFunc("", c.ObtenerMedidores).Methods(http.MethodGet)
-	v1Medidores.HandleFunc("/{codmedidor}", c.ObtenerMedidor).Methods(http.MethodGet)
+	v1Medidores.HandleFunc("/{cod}", c.ObtenerMedidor).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("", c.PostMedidor).Methods(http.MethodPost)
+	v1Medidores.HandleFunc("/{cod}", c.EliminarMedidor).Methods(http.MethodDelete)
 }
 func endPointsWS(ws *mux.Router) {
 	//Subrutas

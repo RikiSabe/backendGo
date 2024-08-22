@@ -8,7 +8,7 @@ type Critica struct {
 	COD            uint   `gorm:"primaryKey;autoIncrement" json:"cod"`
 	Descripcion    string `json:"descripcion"`
 	Tipo           string `json:"tipo"`
-	CodLecturacion string `json:"codLecturacion"`
+	CodLecturacion uint   `json:"codLecturacion"`
 }
 
 func (Critica) TableName() string {

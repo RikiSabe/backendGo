@@ -3,38 +3,34 @@ package controllers
 import (
 	"backend/internal/db"
 	"backend/internal/models"
+	"backend/internal/services"
 	"encoding/json"
 	"errors"
-	"gorm.io/gorm"
 	"net/http"
 	"sync"
+
+	"gorm.io/gorm"
 
 	"github.com/gorilla/mux"
 )
 
 var (
 	mu                 sync.Mutex
-	medidoresChannel   = make(chan []*models.Medidor)
+	medidoresChannel   = make(chan []models.Medidor)
 	wsManagerMedidores = NewWebSocketManager()
 )
 
 func ObtenerMedidores(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
 	var medidores []models.Medidor
-	tx := db.GDB.Begin()
-	if err := tx.Find(&medidores).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			w.WriteHeader(http.StatusNotFound)
-			return
-		} else {
-			tx.Rollback()
-			http.Error(w, "Ha ocurrido un error al obtener la lista", http.StatusInternalServerError)
-			return
-		}
+
+	// Llamar al servicio para obtener todos los medidores activos
+	if err := services.Medidor.GetAll(&medidores); err != nil {
+		http.Error(w, "Ha ocurrido un error al obtener la lista de medidores", http.StatusInternalServerError)
+		return
 	}
 
-	err := json.NewEncoder(w).Encode(&medidores)
-	if err != nil {
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(&medidores); err != nil {
 		http.Error(w, "Error al codificar JSON", http.StatusInternalServerError)
 		return
 	}
@@ -43,17 +39,15 @@ func ObtenerMedidores(w http.ResponseWriter, r *http.Request) {
 func ObtenerMedidor(w http.ResponseWriter, r *http.Request) {
 	var medidor models.Medidor
 	codigoMedidor := mux.Vars(r)["codmedidor"]
-	tx := db.GDB.Begin()
-	if err := tx.Where("codigo = ?", codigoMedidor).First(&medidor).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			http.Error(w, "Medidor no encontrado", http.StatusNotFound)
-			return
-		}
+
+	// Llamar al servicio para obtener un medidor por su código
+	if err := services.Medidor.GetByCod(&medidor, codigoMedidor); err != nil {
+		http.Error(w, "Medidor no encontrado", http.StatusNotFound)
+		return
 	}
-	tx.Commit()
+
 	w.WriteHeader(http.StatusOK)
-	err := json.NewEncoder(w).Encode(&medidor)
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(&medidor); err != nil {
 		http.Error(w, "Error al codificar JSON", http.StatusInternalServerError)
 		return
 	}
@@ -61,35 +55,46 @@ func ObtenerMedidor(w http.ResponseWriter, r *http.Request) {
 
 func PostMedidor(w http.ResponseWriter, r *http.Request) {
 	var medidor models.Medidor
-	err := json.NewDecoder(r.Body).Decode(&medidor)
-	if err != nil {
+
+	// Decodificar el JSON recibido en el request
+	if err := json.NewDecoder(r.Body).Decode(&medidor); err != nil {
 		http.Error(w, "Error al decodificar JSON", http.StatusBadRequest)
 		return
 	}
-	tx := db.GDB.Begin()
-	if err := tx.Create(&medidor).Error; err != nil {
-		tx.Rollback()
-		http.Error(w, "Ha ocurrido un error en el regitro del medidor", http.StatusInternalServerError)
-		return
-	}
-	var medidores []*models.Medidor
-	if err := tx.Find(&medidores).Error; err != nil {
-		tx.Rollback()
-		http.Error(w, "Ha ocurrido un error al obtener la lista del medidores", http.StatusInternalServerError)
-		return
-	}
-	tx.Commit()
 
-	// Enviar la nueva lista al canal
-	mu.Lock()
+	// Llamar al servicio para guardar el nuevo medidor
+	if err := services.Medidor.Save(&medidor); err != nil {
+		http.Error(w, "Ha ocurrido un error al registrar el medidor", http.StatusInternalServerError)
+		return
+	}
+
+	// Obtener la lista actualizada de medidores
+	var medidores []models.Medidor
+	if err := services.Medidor.GetAll(&medidores); err != nil {
+		http.Error(w, "Ha ocurrido un error al obtener la lista de medidores", http.StatusInternalServerError)
+		return
+	}
+
+	// Enviar la nueva lista al canal (para WebSocket)
 	medidoresChannel <- medidores
-	mu.Unlock()
+
 	w.WriteHeader(http.StatusOK)
-	err = json.NewEncoder(w).Encode(&medidor)
-	if err != nil {
+	if err := json.NewEncoder(w).Encode(&medidor); err != nil {
 		http.Error(w, "Ha ocurrido un error al codificar a JSON", http.StatusInternalServerError)
 		return
 	}
+}
+
+func EliminarMedidor(w http.ResponseWriter, r *http.Request) {
+	codigoMedidor := mux.Vars(r)["codmedidor"]
+
+	// Llamar al servicio para marcar el medidor como inactivo
+	if err := services.Medidor.Delete(codigoMedidor); err != nil {
+		http.Error(w, "Ha ocurrido un error al eliminar el medidor", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
 }
 
 func ObtenerMedidoresWS(w http.ResponseWriter, r *http.Request) {

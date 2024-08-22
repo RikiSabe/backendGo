@@ -7,18 +7,19 @@ type TablerUsuario interface {
 }
 
 type Usuario struct {
-	COD           uint   `gorm:"primaryKey;autoIncrement" json:"codigoUsuario"`
+	COD           uint   `gorm:"primaryKey;autoIncrement" json:"cod"`
 	Rol           string `json:"rol"`
 	NombreUsuario string `json:"nombreUsuario"`
 	Contra        string `json:"contra"`
-
-	// Foreigns Keys
-	CodRuta uint
-	// Persona   Persona `gorm:"foreignKey:CodigoPersona"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	// Claves foráneas
+	CodRuta       uint          `json:"codRuta"`
+	Lecturaciones []Lecturacion `gorm:"foreignKey:CodLecturador"` // Se corrigió la sintaxis aquí
+	Persona       Persona       `gorm:"foreignKey:COD"`
+	CreatedAt     time.Time     `gorm:"default:now()"`
+	UpdatedAt     time.Time
 }
 
+// Implementación de la interfaz TablerUsuario
 func (Usuario) TableName() string {
 	return "usuario"
 }

@@ -5,11 +5,16 @@ type TablerRuta interface {
 }
 
 type Ruta struct {
-	Codigo    uint      `gorm:"primaryKey;autoIncrement"`
-	Zona      string    `json:"zona"`
-	Medidores []Medidor `gorm:"foreignKey:CodigoRuta"`
+	COD    uint   `gorm:"primaryKey;autoIncrement" json:"CodigoRuta"`
+	Zona   string `json:"zona"`
+	Nombre string `json:"nombre"`
+	// Relación
+	Usuario       Usuario       `gorm:"foreignKey:CodRuta"`
+	Medidores     []Medidor     `gorm:"foreignKey:CodRuta"`
+	Lecturaciones []Lecturacion `gorm:"foreignKey:CodRuta"` // Se corrigió la sintaxis aquí
 }
 
+// Implementación de la interfaz TablerRuta
 func (Ruta) TableName() string {
 	return "ruta"
 }

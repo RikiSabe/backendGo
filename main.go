@@ -5,10 +5,11 @@ import (
 	"backend/internal/models"
 	"backend/internal/routers"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/joho/godotenv"
 	"log"
 	"net/http"
+
+	"github.com/gorilla/mux"
+	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -26,8 +27,16 @@ func main() {
 		return
 	}
 	// Migrar los modelos
-	if err := db.GDB.AutoMigrate(&models.ReporteError{}, &models.Ruta{}, &models.Medidor{},
-		&models.Lecturador{}, &models.Administrador{}, &models.Lecturacion{},
+	if err := db.GDB.AutoMigrate(
+		&models.Direccion{},
+		&models.Ruta{},
+		&models.Medidor{},
+		&models.Critica{},
+		&models.Lecturacion{},
+		&models.Usuario{},
+		&models.Direccion{},
+		&models.Grupo{},
+		&models.Persona{},
 	); err != nil {
 		log.Fatal("Error al migrar los modelos de la db:", err)
 	}
