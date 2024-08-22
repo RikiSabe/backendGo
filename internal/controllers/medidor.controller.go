@@ -127,3 +127,8 @@ func ObtenerMedidoresWS(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 }
+
+func ActualizarMedidor(w http.ResponseWriter, r *http.Request) {
+	//cod := mux.Vars(r)["cod"]
+
+}

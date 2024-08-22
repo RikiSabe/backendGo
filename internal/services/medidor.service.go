@@ -63,3 +63,16 @@ func (m *medidor) Delete(id string) error {
 	tx.Commit()
 	return nil
 }
+
+func (m *medidor) Update(cod string, i *models.Medidor) error {
+	//medidor := &i
+	tx := db.GDB.Begin()
+	if err := tx.Where("cod = ?", cod).First(&i).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	tx.Commit()
+	return nil
+
+}
