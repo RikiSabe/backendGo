@@ -9,10 +9,12 @@ type TablerPersona interface {
 }
 
 type Persona struct {
-	Id        uint   `gorm:"primaryKey;autoIncrement"`
-	Nombre    string `json:"nombre"`
-	CreatedAt time.Time
-	UpdatedAt time.Time
+	CodigoPersona   uint   `gorm:"primaryKey;autoIncrement" json:"codigoPersona"`
+	Nombre          string `json:"nombre"`
+	Apellido        string `json:"apellido"`
+	FechaNacimiento string `json:"fechaNacimiento"`
+	CreatedAt       time.Time
+	UpdatedAt       time.Time
 }
 
 func (Persona) TableName() string {

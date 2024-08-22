@@ -1,17 +1,23 @@
 package models
 
-import "gorm.io/datatypes"
+import (
+	"time"
+)
 
 type TablerLecturacion interface {
 	TableName() string
 }
 
 type Lecturacion struct {
-	Codigo           uint `gorm:"primaryKey;autoIncrement"`
-	CodigoLecturador uint
-	Hora             datatypes.Time `json:"hora"`
-	Fecha            datatypes.Date `json:"fecha"`
-	Registro         uint
+	CodigoLecturacion uint      `gorm:"primaryKey;autoIncrement" json:"codigoLecturacion"`
+	CodigoLecturador  Usuario   `gorm:"foreignKey:CodigoUsuario"`
+	Criticas          []Critica `gorm:"foreignKey:CodigoCritica"`
+	CodigoRuta        Ruta      `gorm:"foreignKey:CodigoRuta"`
+	Hora              time.Time
+	Fecha             time.Time
+	NumeroRegistro    int `gorm:"autoIncrement"`
+	CreatedAt         time.Time
+	UpdatedAt         time.Time
 }
 
 func (Lecturacion) TableName() string {
