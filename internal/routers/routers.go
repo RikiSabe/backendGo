@@ -39,6 +39,7 @@ func endPointsAPI(api *mux.Router) {
 	v1Lecturaciones.HandleFunc("", c.ObtenerLecturaciones).Methods(http.MethodGet)
 	v1Lecturaciones.HandleFunc("/{cod}", c.ObtenerLecturacion).Methods(http.MethodGet)
 	v1Lecturaciones.HandleFunc("", c.SubirLecturacion).Methods(http.MethodPost)
+	v1Lecturaciones.HandleFunc("/{cod}", c.ModificarLecturacion).Methods(http.MethodPut)
 	v1Lecturaciones.HandleFunc("/{cod}", c.EliminarLecturacion).Methods(http.MethodDelete)
 }
 
