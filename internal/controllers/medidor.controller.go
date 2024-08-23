@@ -6,6 +6,7 @@ import (
 	"backend/internal/services"
 	"encoding/json"
 	"errors"
+	"log"
 	"net/http"
 	"sync"
 
@@ -57,11 +58,13 @@ func PostMedidor(w http.ResponseWriter, r *http.Request) {
 	var medidor models.Medidor
 
 	// Decodificar el JSON recibido en el request
+	log.Println(r.Body)
 	if err := json.NewDecoder(r.Body).Decode(&medidor); err != nil {
+		log.Println(err)
 		http.Error(w, "Error al decodificar JSON", http.StatusBadRequest)
 		return
 	}
-
+	medidor.Estado = "activo"
 	// Llamar al servicio para guardar el nuevo medidor
 	if err := services.Medidor.Save(&medidor); err != nil {
 		http.Error(w, "Ha ocurrido un error al registrar el medidor", http.StatusInternalServerError)
@@ -74,9 +77,6 @@ func PostMedidor(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ha ocurrido un error al obtener la lista de medidores", http.StatusInternalServerError)
 		return
 	}
-
-	// Enviar la nueva lista al canal (para WebSocket)
-	medidoresChannel <- medidores
 
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(&medidor); err != nil {

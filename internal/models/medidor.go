@@ -5,16 +5,16 @@ type TablerMedidor interface {
 }
 
 type Medidor struct {
-	COD           uint   `gorm:"primaryKey;AutoIncrement" json:"codigoMedidor"`
-	Estado        string `json:"estado"`
-	Medicion      int    `json:"medicion"`
-	Nombre        string `json:"nombre"`
-	Propietario   string `json:"propietario"`
-	REC           string `json:"rec"`
-	Registro      string `json:"registro"`
-	CodRuta       uint
-	CodDireccion  uint
-	Lecturaciones []Lecturacion `gorm:"foreignKey:COD"`
+	COD           uint          `gorm:"primaryKey;AutoIncrement" json:"cod"`
+	Estado        string        `json:"estado"`
+	Medicion      int           `json:"medicion"`
+	Nombre        string        `json:"nombre"`
+	Propietario   string        `json:"propietario"`
+	REC           string        `json:"rec"`
+	Registro      string        `json:"registro"`
+	CodRuta       *uint         `json:"codRuta"`
+	CodDireccion  *uint         `json:"codDireccion"`
+	Lecturaciones []Lecturacion `gorm:"foreignKey:COD" json:"lecturaciones,omitempty"`
 }
 
 func (Medidor) TableName() string {
