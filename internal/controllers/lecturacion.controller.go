@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"backend/internal/db"
 	"backend/internal/models"
 	"backend/internal/services"
 	"encoding/json"
@@ -97,7 +98,7 @@ func ModificarLecturacion(w http.ResponseWriter, r *http.Request) {
 	// (Actualizar otros campos según sea necesario)
 
 	// Guardar los cambios en la lecturación existente
-	if err := services.Lecturacion.Save(&lecturacionExistente); err != nil {
+	if err := db.GDB.Save(&lecturacionExistente).Error; err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}

@@ -25,7 +25,7 @@ func Connection() error {
 	dns := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s", host, user, password, dbname, port)
 
 	GDB, err = gorm.Open(postgres.Open(dns), &gorm.Config{
-		Logger:                 logger.Default.LogMode(logger.Error),
+		Logger:                 logger.Default.LogMode(logger.Info),
 		SkipDefaultTransaction: true,
 	})
 	if err != nil {

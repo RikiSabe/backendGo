@@ -117,13 +117,9 @@ func ModificarMedidor(w http.ResponseWriter, r *http.Request) {
 	// Actualizar los campos del medidor existente con los valores del medidor actualizado
 	medidorExistente.Nombre = medidorActualizado.Nombre
 	medidorExistente.Propietario = medidorActualizado.Propietario
-	medidorExistente.Medicion = medidorActualizado.Medicion
 	medidorExistente.REC = medidorActualizado.REC
-	medidorExistente.Registro = medidorActualizado.Registro
-	// (Actualizar otros campos según sea necesario)
-
 	// Guardar los cambios en el medidor existente
-	if err := services.Medidor.Save(&medidorExistente); err != nil {
+	if err := db.GDB.Save(&medidorExistente).Error; err != nil {
 		http.Error(w, "Ha ocurrido un error al actualizar el medidor", http.StatusInternalServerError)
 		return
 	}
