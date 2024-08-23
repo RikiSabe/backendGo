@@ -97,6 +97,44 @@ func EliminarMedidor(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func ModificarMedidor(w http.ResponseWriter, r *http.Request) {
+	var medidorActualizado models.Medidor
+	codigoMedidor := mux.Vars(r)["cod"]
+
+	// Buscar el medidor existente por su código
+	var medidorExistente models.Medidor
+	if err := services.Medidor.GetByCod(&medidorExistente, codigoMedidor); err != nil {
+		http.Error(w, "Medidor no encontrado", http.StatusNotFound)
+		return
+	}
+
+	// Decodificar el JSON recibido en el request
+	if err := json.NewDecoder(r.Body).Decode(&medidorActualizado); err != nil {
+		http.Error(w, "Error al decodificar JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Actualizar los campos del medidor existente con los valores del medidor actualizado
+	medidorExistente.Nombre = medidorActualizado.Nombre
+	medidorExistente.Propietario = medidorActualizado.Propietario
+	medidorExistente.Medicion = medidorActualizado.Medicion
+	medidorExistente.REC = medidorActualizado.REC
+	medidorExistente.Registro = medidorActualizado.Registro
+	// (Actualizar otros campos según sea necesario)
+
+	// Guardar los cambios en el medidor existente
+	if err := services.Medidor.Save(&medidorExistente); err != nil {
+		http.Error(w, "Ha ocurrido un error al actualizar el medidor", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(&medidorExistente); err != nil {
+		http.Error(w, "Error al codificar JSON", http.StatusInternalServerError)
+		return
+	}
+}
+
 func ObtenerMedidoresWS(w http.ResponseWriter, r *http.Request) {
 	upgrader := NewUpgrader()
 	ws, _ := upgrader.Upgrade(w, r, nil)
