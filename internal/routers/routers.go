@@ -25,7 +25,7 @@ func endPointsAPI(api *mux.Router) {
 	v1Lecturaciones := v1.PathPrefix("/lecturaciones").Subrouter()
 	v1Criticas := v1.PathPrefix("/criticas").Subrouter()
 	v1Rutas := v1.PathPrefix("/rutas").Subrouter()
-
+	v1Usuarios := v1.PathPrefix("/usuarios").Subrouter()
 	// v1 Personas
 	v1Personas.HandleFunc("", c.ObtenerPersonas).Methods(http.MethodGet)
 	v1Personas.HandleFunc("", c.SubirPersonas).Methods(http.MethodPost)
@@ -55,6 +55,9 @@ func endPointsAPI(api *mux.Router) {
 	v1Rutas.HandleFunc("/{cod}", c.ObtenerRuta).Methods(http.MethodGet)
 	v1Rutas.HandleFunc("", c.SubirRuta).Methods(http.MethodPost)
 	v1Rutas.HandleFunc("/{cod}", c.ModificarRuta).Methods(http.MethodPut)
+
+	//v1 Usuarios
+	v1Usuarios.HandleFunc("/lecturador", c.Usuario.ObtenerLecturadores).Methods(http.MethodGet)
 }
 
 func endPointsWS(ws *mux.Router) {
