@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"backend/internal/db"
+	"backend/internal/models"
 	"encoding/json"
 	"net/http"
 )
@@ -17,6 +18,7 @@ func (usuario) ObtenerLecturadores(w http.ResponseWriter, r *http.Request) {
 		Nombre          string `json:"nombre"`
 		Apellido        string `json:"apellido"`
 		FechaNacimiento string `json:"fechaNacimiento"`
+		Usuario         string `json:"usuario"`
 		CodRuta         uint   `json:"codRuta,omitempty"`
 		NombreRuta      string `json:"nombreRuta,omitempty"`
 	}
@@ -37,5 +39,16 @@ where u.rol ='lecturador';`
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	return
+}
+func (usuario) ModificarLecturadorRutaGrupo(w http.ResponseWriter, r *http.Request) {
+	var lecturador struct {
+		COD      uint  `json:"cod"`
+		CodRuta  uint  `json:"codRuta"`
+		CodGrupo *uint `json:"codGrupo"`
+	}
+	tx := db.GDB.Begin()
+	tx.Model(models.Usuario{}).Select("cod_ruta", "cod_grupo").Where("cod = ?", lecturador.COD).Updates(lecturador)
+	tx.Commit()
 	return
 }
