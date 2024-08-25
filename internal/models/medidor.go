@@ -1,11 +1,7 @@
 package models
 
-type TablerMedidor interface {
-	TableName() string
-}
-
 type Medidor struct {
-	COD           uint          `gorm:"primaryKey;AutoIncrement" json:"cod"`
+	COD           uint          `gorm:"primaryKey;autoIncrement" json:"cod"`
 	Estado        string        `json:"estado"`
 	Medicion      int           `json:"medicion"`
 	Nombre        string        `json:"nombre"`

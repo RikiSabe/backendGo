@@ -1,15 +1,15 @@
 package models
 
-type TablerRuta interface {
+type Tabler interface {
 	TableName() string
 }
 
 type Ruta struct {
-	COD    uint   `gorm:"primaryKey;autoIncrement" json:"CodigoRuta"`
+	COD    uint   `gorm:"primaryKey;autoIncrement" json:"cod"`
 	Zona   string `json:"zona"`
 	Nombre string `json:"nombre"`
-	// Relación
 	Estado string `json:"estado"`
+	// Relación
 }
 
 // Implementación de la interfaz TablerRuta

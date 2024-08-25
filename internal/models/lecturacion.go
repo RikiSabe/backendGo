@@ -6,10 +6,6 @@ import (
 	"gorm.io/datatypes"
 )
 
-type TablerLecturacion interface {
-	TableName() string
-}
-
 type Lecturacion struct {
 	COD           uint `gorm:"primaryKey;autoIncrement"`
 	CodRuta       uint

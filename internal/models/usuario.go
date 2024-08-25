@@ -2,21 +2,19 @@ package models
 
 import "time"
 
-type TablerUsuario interface {
-	TableName() string
-}
-
 type Usuario struct {
-	COD           uint   `gorm:"primaryKey;autoIncrement" json:"cod"`
-	Rol           string `json:"rol"`
-	NombreUsuario string `json:"nombreUsuario"`
-	Contra        string `json:"contra"`
+	COD     uint   `gorm:"primaryKey;autoIncrement" json:"cod"`
+	Rol     string `json:"rol"`
+	Usuario string `json:"usuario"`
+	Contra  string `json:"contra"`
 	// Claves foráneas
-	CodRuta       uint          `json:"codRuta"`
+	CodRuta       uint `json:"codRuta"`
+	CodPersona    uint
+	CodGrupo      *uint
 	Lecturaciones []Lecturacion `gorm:"foreignKey:CodLecturador"` // Se corrigió la sintaxis aquí
-	Persona       Persona       `gorm:"foreignKey:COD"`
-	CreatedAt     time.Time     `gorm:"default:now()"`
-	UpdatedAt     time.Time
+
+	CreatedAt time.Time `gorm:"default:now()"`
+	UpdatedAt time.Time
 }
 
 // Implementación de la interfaz TablerUsuario
