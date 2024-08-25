@@ -8,6 +8,7 @@ type Critica struct {
 	COD            uint   `gorm:"primaryKey;autoIncrement" json:"cod"`
 	Descripcion    string `json:"descripcion"`
 	Tipo           string `json:"tipo"`
+	Estado         string `json:"estado"`
 	CodLecturacion uint   `json:"codLecturacion"`
 }
 

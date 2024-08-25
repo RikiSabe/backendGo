@@ -2,7 +2,6 @@ package main
 
 import (
 	"backend/internal/db"
-	"backend/internal/models"
 	"backend/internal/routers"
 	"fmt"
 	"log"
@@ -32,14 +31,14 @@ func main() {
 
 	// Migrar los modelos
 	if err := db.GDB.AutoMigrate(
-		&models.Direccion{},
-		&models.Ruta{},
-		&models.Medidor{},
-		&models.Critica{},
-		&models.Lecturacion{},
-		&models.Usuario{},
-		&models.Grupo{},
-		&models.Persona{},
+	// &models.Direccion{},
+	// &models.Ruta{},
+	// &models.Medidor{},
+	// &models.Critica{},
+	// &models.Lecturacion{},
+	// &models.Usuario{},
+	// &models.Grupo{},
+	// &models.Persona{},
 	); err != nil {
 		log.Fatal("Error al migrar los modelos de la db:", err)
 	}

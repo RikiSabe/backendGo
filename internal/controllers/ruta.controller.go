@@ -12,22 +12,22 @@ import (
 	"gorm.io/gorm"
 )
 
-func ObtenerCriticas(w http.ResponseWriter, r *http.Request) {
-	var criticas []models.Critica
-	if err := services.Critica.GetAll(&criticas); err != nil {
+func ObtenerRutas(w http.ResponseWriter, r *http.Request) {
+	var rutas []models.Ruta
+	if err := services.Ruta.GetAll(&rutas); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	if err := json.NewEncoder(w).Encode(&criticas); err != nil {
+	if err := json.NewEncoder(w).Encode(&rutas); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
 	w.WriteHeader(http.StatusOK)
 }
 
-func ObtenerCritica(w http.ResponseWriter, r *http.Request) {
-	var critica models.Critica
+func ObtenerRuta(w http.ResponseWriter, r *http.Request) {
+	var ruta models.Ruta
 	cod := mux.Vars(r)["cod"]
-	if err := services.Critica.GetById(&critica, cod); err != nil {
+	if err := services.Ruta.GetById(&ruta, cod); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -36,36 +36,36 @@ func ObtenerCritica(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(&critica); err != nil {
+	if err := json.NewEncoder(w).Encode(&ruta); err != nil {
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
 }
 
-func SubirCritica(w http.ResponseWriter, r *http.Request) {
-	var critica models.Critica
-	if err := json.NewDecoder(r.Body).Decode(&critica); err != nil {
+func SubirRuta(w http.ResponseWriter, r *http.Request) {
+	var ruta models.Ruta
+	if err := json.NewDecoder(r.Body).Decode(&ruta); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	if err := services.Critica.Save(&critica); err != nil {
+	if err := services.Ruta.Save(&ruta); err != nil {
 		http.Error(w, "Ha ocurrido un error al guardar en la BD", http.StatusInternalServerError)
 		return
 	}
-	if err := json.NewEncoder(w).Encode(&critica); err != nil {
+	if err := json.NewEncoder(w).Encode(&ruta); err != nil {
 		http.Error(w, "Ha ocurrido un error al parsear a JSON", http.StatusInternalServerError)
 		return
 	}
 	w.WriteHeader(http.StatusOK)
 }
 
-func ModificarCritica(w http.ResponseWriter, r *http.Request) {
-	var criticaActualizada models.Critica
+func ModificarRuta(w http.ResponseWriter, r *http.Request) {
+	var rutaActualizada models.Ruta
 	cod := mux.Vars(r)["cod"]
 
 	// Buscar la lecturación existente por su código
-	var criticaExistente models.Critica
-	if err := services.Critica.GetById(&criticaExistente, cod); err != nil {
+	var rutaExistente models.Ruta
+	if err := services.Ruta.GetById(&rutaExistente, cod); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -75,7 +75,7 @@ func ModificarCritica(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Decodificar el JSON recibido en el request
-	if err := json.NewDecoder(r.Body).Decode(&criticaActualizada); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&rutaActualizada); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
@@ -84,17 +84,17 @@ func ModificarCritica(w http.ResponseWriter, r *http.Request) {
 	// lecturacionExistente.Fecha = lecturacionActualizada.Fecha
 	// lecturacionExistente.NroRegistro = lecturacionActualizada.NroRegistro
 	// (Actualizar otros campos según sea necesario)
-	criticaExistente.Descripcion = criticaActualizada.Descripcion
-	criticaExistente.Tipo = criticaActualizada.Tipo
-	criticaExistente.Estado = criticaActualizada.Estado
+	rutaExistente.Nombre = rutaActualizada.Nombre
+	rutaExistente.Zona = rutaActualizada.Zona
+	rutaExistente.Estado = rutaActualizada.Estado
 	// Guardar los cambios en la lecturación existente
-	if err := db.GDB.Save(&criticaExistente).Error; err != nil {
+	if err := db.GDB.Save(&rutaExistente).Error; err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(http.StatusOK)
-	if err := json.NewEncoder(w).Encode(&criticaExistente); err != nil {
+	if err := json.NewEncoder(w).Encode(&rutaExistente); err != nil {
 		http.Error(w, "Ha ocurrido un error al codificar a JSON", http.StatusInternalServerError)
 		return
 	}
