@@ -8,9 +8,9 @@ type Usuario struct {
 	Usuario string `json:"usuario"`
 	Contra  string `json:"contra"`
 	// Claves foráneas
-	CodRuta       uint `json:"codRuta"`
-	CodPersona    uint
-	CodGrupo      *uint
+	CodRuta       uint          `json:"-"`
+	CodPersona    uint          `json:"-"`
+	CodGrupo      *uint         `json:"-"`
 	Lecturaciones []Lecturacion `gorm:"foreignKey:CodLecturador"` // Se corrigió la sintaxis aquí
 
 	CreatedAt time.Time `gorm:"default:now()"`
