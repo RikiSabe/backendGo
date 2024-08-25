@@ -10,6 +10,7 @@ type Usuario struct {
 	// Claves foráneas
 	CodRuta       uint          `json:"-"`
 	CodPersona    uint          `json:"-"`
+	Persona       *Persona      `gorm:"foreignKey:CodPersona"`
 	CodGrupo      *uint         `json:"-"`
 	Lecturaciones []Lecturacion `gorm:"foreignKey:CodLecturador"` // Se corrigió la sintaxis aquí
 
