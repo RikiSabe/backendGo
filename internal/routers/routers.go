@@ -61,6 +61,7 @@ func endPointsAPI(api *mux.Router) {
 	v1Usuarios.HandleFunc("/lecturador/ruta-grupo", c.Usuario.ModificarLecturadorRutaGrupo).Methods(http.MethodPut)
 	v1Usuarios.HandleFunc("/lecturador/{cod_usuario}/restablecer-clave", c.Usuario.RestablecerContra).Methods(http.MethodPut)
 	v1Usuarios.HandleFunc("/lecturador/{cod_lecturador}", c.Usuario.ModificarDatosLecturador).Methods(http.MethodPut)
+	v1Usuarios.HandleFunc("/lecturador", c.Usuario.AgregarLecturador).Methods(http.MethodPost)
 }
 
 func endPointsWS(ws *mux.Router) {
