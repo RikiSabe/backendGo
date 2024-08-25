@@ -95,7 +95,6 @@ func ModificarLecturacion(w http.ResponseWriter, r *http.Request) {
 	// Actualizar los campos de la lecturación existente con los valores de la lecturación actualizada
 	lecturacionExistente.Fecha = lecturacionActualizada.Fecha
 	lecturacionExistente.NroRegistro = lecturacionActualizada.NroRegistro
-	// (Actualizar otros campos según sea necesario)
 
 	// Guardar los cambios en la lecturación existente
 	if err := db.GDB.Save(&lecturacionExistente).Error; err != nil {

@@ -80,10 +80,6 @@ func ModificarRuta(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Actualizar los campos de la lecturación existente con los valores de la lecturación actualizada
-	// lecturacionExistente.Fecha = lecturacionActualizada.Fecha
-	// lecturacionExistente.NroRegistro = lecturacionActualizada.NroRegistro
-	// (Actualizar otros campos según sea necesario)
 	rutaExistente.Nombre = rutaActualizada.Nombre
 	rutaExistente.Zona = rutaActualizada.Zona
 	rutaExistente.Estado = rutaActualizada.Estado
