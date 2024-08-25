@@ -8,7 +8,10 @@ require (
 	gorm.io/gorm v1.25.10
 )
 
-require github.com/felixge/httpsnoop v1.0.3 // indirect
+require (
+	github.com/felixge/httpsnoop v1.0.3 // indirect
+	github.com/sethvargo/go-password v0.3.1 // indirect
+)
 
 require (
 	dario.cat/mergo v1.0.0 // indirect
