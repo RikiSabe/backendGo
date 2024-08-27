@@ -142,6 +142,7 @@ func ObtenerMedidoresWS(w http.ResponseWriter, r *http.Request) {
 	if err := tx.Find(&medidores).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 
+			return
 		} else {
 			tx.Rollback()
 			return

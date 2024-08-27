@@ -5,12 +5,13 @@ import (
 	"backend/internal/models"
 	"encoding/json"
 	"errors"
+	"log"
+	"net/http"
+
 	"github.com/gorilla/mux"
 	"github.com/sethvargo/go-password/password"
 	"golang.org/x/crypto/bcrypt"
 	"gorm.io/gorm"
-	"log"
-	"net/http"
 )
 
 type usuario struct {
@@ -30,11 +31,11 @@ func (usuario) ObtenerLecturadores(w http.ResponseWriter, r *http.Request) {
 		NombreRuta      string `json:"nombreRuta,omitempty"`
 	}
 	query := `select p.cod as cod_persona,p.nombre, p.apellido,p.fecha_nacimiento as fecha_nacimiento,u.cod as cod_usuario, u.usuario,r.cod as cod_ruta,r.nombre as nombre_ruta from persona p
-left join usuario u
-on u.cod_persona = p.cod
-left join ruta r
-on u.cod_ruta = r.cod
-where u.rol ='lecturador';`
+		left join usuario u
+		on u.cod_persona = p.cod
+		left join ruta r
+		on u.cod_ruta = r.cod
+		where u.rol ='lecturador';`
 	tx := db.GDB.Begin()
 	if err := tx.Raw(query).Find(&lecturadores).Error; err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -46,7 +47,6 @@ where u.rol ='lecturador';`
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	return
 }
 func (usuario) ModificarLecturadorRutaGrupo(w http.ResponseWriter, r *http.Request) {
 	var lecturador struct {
@@ -57,7 +57,6 @@ func (usuario) ModificarLecturadorRutaGrupo(w http.ResponseWriter, r *http.Reque
 	tx := db.GDB.Begin()
 	tx.Model(models.Usuario{}).Select("cod_ruta", "cod_grupo").Where("cod = ?", lecturador.COD).Updates(lecturador)
 	tx.Commit()
-	return
 }
 func (usuario) RestablecerContra(w http.ResponseWriter, r *http.Request) {
 	cod := mux.Vars(r)["cod_usuario"]
