@@ -19,7 +19,7 @@ type auth struct {
 var secretKey = []byte(os.Getenv("JWT_SECRET"))
 var Auth auth
 
-func AuthLogin(w http.ResponseWriter, r *http.Request) {
+func (auth) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	// Decodificar el cuerpo de la solicitud para obtener el username y password
 	var user struct {
 		Username string `json:"username"`
