@@ -10,6 +10,7 @@ require (
 
 require (
 	github.com/felixge/httpsnoop v1.0.3 // indirect
+	github.com/golang-jwt/jwt/v5 v5.2.1 // indirect
 	github.com/sethvargo/go-password v0.3.1 // indirect
 )
 
