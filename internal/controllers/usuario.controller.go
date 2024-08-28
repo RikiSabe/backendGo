@@ -21,16 +21,16 @@ var Usuario usuario
 
 func (usuario) ObtenerLecturadores(w http.ResponseWriter, r *http.Request) {
 	var lecturadores []struct {
-		CodPersona      uint   `json:"codPersona"`
-		Nombre          string `json:"nombre"`
-		Apellido        string `json:"apellido"`
-		FechaNacimiento string `json:"fechaNacimiento"`
-		CodUsuario      uint   `json:"codUsuario"`
-		Usuario         string `json:"usuario"`
-		CodRuta         uint   `json:"codRuta,omitempty"`
-		NombreRuta      string `json:"nombreRuta,omitempty"`
+		CodPersona uint   `json:"codPersona"`
+		Nombre     string `json:"nombre"`
+		Apellido   string `json:"apellido"`
+		CI         string `json:"ci"`
+		CodUsuario uint   `json:"codUsuario"`
+		Usuario    string `json:"usuario"`
+		CodRuta    uint   `json:"codRuta,omitempty"`
+		NombreRuta string `json:"nombreRuta,omitempty"`
 	}
-	query := `select p.cod as cod_persona,p.nombre, p.apellido,p.fecha_nacimiento as fecha_nacimiento,u.cod as cod_usuario, u.usuario,r.cod as cod_ruta,r.nombre as nombre_ruta from persona p
+	query := `select p.cod as cod_persona,p.nombre, p.apellido,p.ci as ci,u.cod as cod_usuario, u.usuario,r.cod as cod_ruta,r.nombre as nombre_ruta from persona p
 		left join usuario u
 		on u.cod_persona = p.cod
 		left join ruta r
@@ -113,10 +113,10 @@ func (usuario) RestablecerContra(w http.ResponseWriter, r *http.Request) {
 func (usuario) ModificarDatosLecturador(w http.ResponseWriter, r *http.Request) {
 	cod := mux.Vars(r)["cod_lecturador"]
 	var personaLecturador struct {
-		COD             uint   `json:"cod"`
-		Nombre          string `json:"nombre"`
-		Apellido        string `json:"apellido"`
-		FechaNacimiento string `json:"fechaNacimiento"`
+		COD      uint   `json:"cod"`
+		Nombre   string `json:"nombre"`
+		Apellido string `json:"apellido"`
+		CI       string `json:"ci"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&personaLecturador); err != nil {
 		log.Println(err)
@@ -137,12 +137,12 @@ func (usuario) ModificarDatosLecturador(w http.ResponseWriter, r *http.Request) 
 }
 func (usuario) AgregarLecturador(w http.ResponseWriter, r *http.Request) {
 	var lecturador struct {
-		Usuario         string `json:"usuario"`
-		Nombre          string `json:"nombre"`
-		Apellido        string `json:"apellido"`
-		FechaNacimiento string `json:"fechaNacimiento"`
-		CodRuta         uint   `json:"codRuta"`
-		CodGrupo        uint   `json:"codGrupo"`
+		Usuario  string `json:"usuario"`
+		Nombre   string `json:"nombre"`
+		Apellido string `json:"apellido"`
+		CI       string `json:"ci"`
+		CodRuta  uint   `json:"codRuta"`
+		CodGrupo uint   `json:"codGrupo"`
 	}
 
 	// Decodificar el cuerpo de la solicitud
@@ -188,9 +188,9 @@ func (usuario) AgregarLecturador(w http.ResponseWriter, r *http.Request) {
 		CodGrupo: &lecturador.CodGrupo,
 		CodRuta:  lecturador.CodRuta,
 		Persona: &models.Persona{
-			Nombre:          lecturador.Nombre,
-			Apellido:        lecturador.Apellido,
-			FechaNacimiento: lecturador.FechaNacimiento,
+			Nombre:   lecturador.Nombre,
+			Apellido: lecturador.Apellido,
+			CI:       lecturador.CI,
 		},
 	}
 

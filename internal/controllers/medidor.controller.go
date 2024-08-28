@@ -5,22 +5,21 @@ import (
 	"backend/internal/models"
 	"backend/internal/services"
 	"encoding/json"
-	"errors"
 	"log"
 	"net/http"
-	"sync"
-
-	"gorm.io/gorm"
 
 	"github.com/gorilla/mux"
 )
 
+/*
 var (
+
 	mu                 sync.Mutex
 	medidoresChannel   = make(chan []models.Medidor)
 	wsManagerMedidores = NewWebSocketManager()
-)
 
+)
+*/
 func ObtenerMedidores(w http.ResponseWriter, r *http.Request) {
 	var medidores []models.Medidor
 
@@ -131,6 +130,7 @@ func ModificarMedidor(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+/*
 func ObtenerMedidoresWS(w http.ResponseWriter, r *http.Request) {
 	upgrader := NewUpgrader()
 	ws, _ := upgrader.Upgrade(w, r, nil)
@@ -167,3 +167,4 @@ func ActualizarMedidor(w http.ResponseWriter, r *http.Request) {
 	//cod := mux.Vars(r)["cod"]
 
 }
+*/
