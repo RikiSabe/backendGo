@@ -35,11 +35,12 @@ func ObtenerCritica(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+
 	if err := json.NewEncoder(w).Encode(&critica); err != nil {
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 }
 
 func SubirCritica(w http.ResponseWriter, r *http.Request) {
