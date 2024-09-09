@@ -31,6 +31,29 @@ func (m *medidor) GetByCod(i *models.Medidor, id string) error {
 	return nil
 }
 
+// func (m *medidor) GetByRuta(i *[]models.Medidor, id string) error {
+// 	tx := db.GDB.Begin()
+
+// 	if err := tx.Where("cod_ruta = ? and estado = ?", id, "activo").Find(&i).Error; err != nil {
+// 		tx.Rollback()
+// 		return err
+// 	}
+// 	tx.Commit()
+// 	return nil
+// }
+
+func (m *medidor) GetByRuta(i *[]models.Medidor, id string) error {
+	tx := db.GDB.Begin()
+
+	// Realiza el join entre Medidor y Direccion para obtener las coordenadas
+	if err := tx.Preload("CodDireccion").Where("cod_ruta = ? and estado = ?", id, "activo").Find(&i).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+	tx.Commit()
+	return nil
+}
+
 func (m *medidor) Save(i *models.Medidor) error {
 	tx := db.GDB.Begin()
 

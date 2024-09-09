@@ -11,10 +11,10 @@ func InitEndPoints(r *mux.Router) {
 	// r.Use(middleware.LoggingHandler)
 
 	api := r.PathPrefix("/api").Subrouter()
-	ws := r.PathPrefix("/ws").Subrouter()
+	//ws := r.PathPrefix("/ws").Subrouter()
 
 	endPointsAPI(api)
-	endPointsWS(ws)
+	//endPointsWS(ws)
 }
 
 func endPointsAPI(api *mux.Router) {
@@ -26,6 +26,7 @@ func endPointsAPI(api *mux.Router) {
 	v1Criticas := v1.PathPrefix("/criticas").Subrouter()
 	v1Rutas := v1.PathPrefix("/rutas").Subrouter()
 	v1Usuarios := v1.PathPrefix("/usuarios").Subrouter()
+
 	// v1 Personas
 	v1Personas.HandleFunc("", c.ObtenerPersonas).Methods(http.MethodGet)
 	v1Personas.HandleFunc("", c.SubirPersonas).Methods(http.MethodPost)
@@ -36,6 +37,9 @@ func endPointsAPI(api *mux.Router) {
 	v1Medidores.HandleFunc("", c.PostMedidor).Methods(http.MethodPost)
 	v1Medidores.HandleFunc("/{cod}", c.ModificarMedidor).Methods(http.MethodPut)
 	v1Medidores.HandleFunc("/{cod}", c.EliminarMedidor).Methods(http.MethodDelete)
+	v1Medidores.HandleFunc("/byruta/{cod_ruta}", c.ObtenerMedidoresByRuta).Methods(http.MethodGet)
+	v1Medidores.HandleFunc("/direcciones/{cod_ruta}", c.ObtenerDireccionMedidores).Methods(http.MethodGet)
+	v1Medidores.HandleFunc("/direccion/{cod_direccion}", c.ObtenerDireccion).Methods(http.MethodGet)
 
 	// v1 Lecturaciones
 	v1Lecturaciones.HandleFunc("", c.ObtenerLecturaciones).Methods(http.MethodGet)
@@ -62,15 +66,18 @@ func endPointsAPI(api *mux.Router) {
 	v1Usuarios.HandleFunc("/lecturador/{cod_usuario}/restablecer-clave", c.Usuario.RestablecerContra).Methods(http.MethodPut)
 	v1Usuarios.HandleFunc("/lecturador/{cod_lecturador}", c.Usuario.ModificarDatosLecturador).Methods(http.MethodPut)
 	v1Usuarios.HandleFunc("/lecturador", c.Usuario.AgregarLecturador).Methods(http.MethodPost)
+	v1Usuarios.HandleFunc("/lecturadorbyuser/{usuario}", c.Usuario.ObtenerLecturadorPorUsuario).Methods(http.MethodGet)
 
 	//v1 Login
 	v1.HandleFunc("/login", c.Auth.AuthLogin).Methods(http.MethodPost)
+
 }
 
+/*
 func endPointsWS(ws *mux.Router) {
 	v1 := ws.PathPrefix("/v1").Subrouter()
 	v1Medidores := v1.PathPrefix("/medidores").Subrouter()
 
 	// v1 Medidores
 	v1Medidores.HandleFunc("/medidor", c.ObtenerMedidoresWS)
-}
+}*/

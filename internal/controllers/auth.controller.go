@@ -5,12 +5,13 @@ import (
 	"backend/internal/models"
 	"encoding/json"
 	"errors"
-	"github.com/golang-jwt/jwt/v5"
-	"golang.org/x/crypto/bcrypt"
-	"gorm.io/gorm"
 	"net/http"
 	"os"
 	"time"
+
+	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
 type auth struct {
