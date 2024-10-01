@@ -1,37 +1,38 @@
 package controllers
 
 import (
-	"github.com/gorilla/websocket"
 	"net/http"
 	"sync"
+
+	"github.com/gorilla/websocket"
 )
 
-type WebSocketManager struct {
+type Manager struct {
 	mu    sync.Mutex
 	conns map[*websocket.Conn]bool
 }
 
-func NewWebSocketManager() *WebSocketManager {
-	return &WebSocketManager{
+func NewWebSocketManager() *Manager {
+	return &Manager{
 		conns: make(map[*websocket.Conn]bool),
 	}
 }
 func NewUpgrader() *websocket.Upgrader {
 	return &websocket.Upgrader{}
 }
-func (manager *WebSocketManager) AddConn(ws *websocket.Conn) {
+func (manager *Manager) AddConn(ws *websocket.Conn) {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 	manager.conns[ws] = true
 }
 
-func (manager *WebSocketManager) RemoveConn(ws *websocket.Conn) {
+func (manager *Manager) RemoveConn(ws *websocket.Conn) {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
 	delete(manager.conns, ws)
 }
 
-func (manager *WebSocketManager) Broadcast(message interface{}) {
+func (manager *Manager) Broadcast(message interface{}) {
 	manager.mu.Lock()
 	conns := make([]*websocket.Conn, 0, len(manager.conns))
 	for ws := range manager.conns {
@@ -57,7 +58,7 @@ func (manager *WebSocketManager) Broadcast(message interface{}) {
 }
 
 // Handler para manejar las conexiones WebSocket
-func WebSocketHandler(manager *WebSocketManager, upgrader *websocket.Upgrader) http.HandlerFunc {
+func WebSocketHandler(manager *Manager, upgrader *websocket.Upgrader) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ws, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
