@@ -249,7 +249,7 @@ func (usuario) AgregarLecturador(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	print(newPassword)
+	//print("Contra generada: " + newPassword)
 	// Cifrar la contraseña
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {

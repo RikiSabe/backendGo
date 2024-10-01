@@ -41,6 +41,7 @@ func ObtenerLecturacion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
 func EliminarLecturacion(w http.ResponseWriter, r *http.Request) {
 	cod := mux.Vars(r)["cod"]
 	if err := services.Lecturacion.Delete(cod); err != nil {
