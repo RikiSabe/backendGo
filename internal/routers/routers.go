@@ -11,10 +11,10 @@ func InitEndPoints(r *mux.Router) {
 	// r.Use(middleware.LoggingHandler)
 
 	api := r.PathPrefix("/api").Subrouter()
-	//ws := r.PathPrefix("/ws").Subrouter()
+	ws := r.PathPrefix("/ws").Subrouter()
 
 	endPointsAPI(api)
-	//endPointsWS(ws)
+	endPointsWS(ws)
 }
 
 func endPointsAPI(api *mux.Router) {
@@ -73,11 +73,10 @@ func endPointsAPI(api *mux.Router) {
 
 }
 
-/*
 func endPointsWS(ws *mux.Router) {
 	v1 := ws.PathPrefix("/v1").Subrouter()
-	v1Medidores := v1.PathPrefix("/medidores").Subrouter()
+	v1UbicacionLecturador := v1.PathPrefix("/ubicacion-lecturador").Subrouter()
 
 	// v1 Medidores
-	v1Medidores.HandleFunc("/medidor", c.ObtenerMedidoresWS)
-}*/
+	v1UbicacionLecturador.HandleFunc("", c.Monitoreo.ObtenerUbicacionLecturadorWS)
+}
