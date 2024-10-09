@@ -36,7 +36,58 @@ func (auth) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	tx := db.GDB.Begin()
 
 	// Buscar el usuario por su nombre de usuario
-	if err := tx.Where("usuario = ?", user.Username).First(&userR).Error; err != nil {
+	if err := tx.Where("usuario = ? and rol = 'lecturador'", user.Username).First(&userR).Error; err != nil {
+		tx.Rollback()
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			json.NewEncoder(w).Encode(map[string]string{"error": "Usuario no encontrado"})
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Error al recuperar el usuario"})
+		return
+	}
+
+	tx.Commit()
+
+	// Verificar la contraseña
+	err := bcrypt.CompareHashAndPassword([]byte(userR.Contra), []byte(user.Password))
+	if err != nil {
+		w.WriteHeader(http.StatusUnauthorized)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Contraseña incorrecta"})
+		return
+	}
+
+	// Crear el token JWT
+	token, err := createToken(user.Username)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Error al crear el token"})
+		return
+	}
+
+	// Enviar el token como respuesta JSON
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]string{"token": token})
+}
+
+func (auth) AuthLoginWeb(w http.ResponseWriter, r *http.Request) {
+	// Decodificar el cuerpo de la solicitud para obtener el username y password
+	var user struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Solicitud inválida"})
+		return
+	}
+
+	var userR models.Usuario
+	tx := db.GDB.Begin()
+
+	// Buscar el usuario por su nombre de usuario
+	if err := tx.Where("usuario = ? and rol = 'admin'", user.Username).First(&userR).Error; err != nil {
 		tx.Rollback()
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			w.WriteHeader(http.StatusNotFound)

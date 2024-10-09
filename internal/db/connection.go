@@ -28,6 +28,7 @@ func Connection() error {
 		Logger:                 logger.Default.LogMode(logger.Info),
 		SkipDefaultTransaction: true,
 	})
+
 	if err != nil {
 		log.Fatal(err)
 		return err

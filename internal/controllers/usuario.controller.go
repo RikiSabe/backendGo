@@ -49,6 +49,41 @@ func (usuario) ObtenerLecturadores(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func (usuario) ObtenerLecturadorPorCodPersona(w http.ResponseWriter, r *http.Request) {
+	var personaLecturador struct {
+		Nombre   string `json:"nombre"`
+		Apellido string `json:"apellido"`
+		CI       string `json:"ci"`
+		Usuario  string `json:"usuario"`
+	}
+
+	// Obtiene el codPersona desde la URL
+	codPersona := mux.Vars(r)["cod"]
+
+	// Ajusta la consulta SQL para obtener también el usuario
+	query := `select p.cod as cod_persona, p.nombre, p.apellido, p.ci as ci, u.usuario 
+			  from persona p
+			  left join usuario u on u.cod_persona = p.cod
+			  where p.cod = ? and u.rol = 'lecturador';`
+
+	tx := db.GDB.Begin()
+	if err := tx.Raw(query, codPersona).Scan(&personaLecturador).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	tx.Commit()
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(&personaLecturador); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
 func (usuario) ObtenerLecturadorPorUsuario(w http.ResponseWriter, r *http.Request) {
 	var lecturador struct {
 		CodPersona uint   `json:"codPersona"`
@@ -154,10 +189,10 @@ func (usuario) RestablecerContra(w http.ResponseWriter, r *http.Request) {
 func (usuario) ModificarDatosLecturador(w http.ResponseWriter, r *http.Request) {
 	cod := mux.Vars(r)["cod_lecturador"]
 	var personaLecturador struct {
-		COD      uint   `json:"cod"`
 		Nombre   string `json:"nombre"`
 		Apellido string `json:"apellido"`
 		CI       string `json:"ci"`
+		Usuario  string `json:"usuario"`
 	}
 	if err := json.NewDecoder(r.Body).Decode(&personaLecturador); err != nil {
 		log.Println(err)
@@ -176,6 +211,7 @@ func (usuario) ModificarDatosLecturador(w http.ResponseWriter, r *http.Request) 
 	tx.Commit()
 	w.WriteHeader(http.StatusOK)
 }
+
 func (usuario) AgregarLecturador(w http.ResponseWriter, r *http.Request) {
 	var lecturador struct {
 		Usuario  string `json:"usuario"`
