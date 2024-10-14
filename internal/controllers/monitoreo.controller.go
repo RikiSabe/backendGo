@@ -59,7 +59,7 @@ func (monitoreo) ObtenerUbicacionLecturadorWS(w http.ResponseWriter, r *http.Req
 	mu.Lock()
 	managerUbicacionesWS.AddConn(ws)
 	mu.Unlock()
-
+	log.Printf("Cantidad de conexiones: %d", len(managerUbicacionesWS.conns))
 	// Loop para leer ubicaciones enviadas por el cliente
 	for {
 		// Leer ubicación en formato JSON
@@ -67,6 +67,7 @@ func (monitoreo) ObtenerUbicacionLecturadorWS(w http.ResponseWriter, r *http.Req
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err) {
 				log.Println("Conexión cerrada inesperadamente:", err)
+				managerUbicacionesWS.RemoveConn(ws)
 			} else {
 				log.Println("Error al leer JSON:", err)
 			}
