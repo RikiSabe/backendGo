@@ -17,9 +17,9 @@ func main() {
 	var err error
 
 	// Cargar el archivo .env
-	if err := godotenv.Load(".env"); err != nil {
-		log.Fatal("Error al cargar el archivo .env")
-	}
+	// if err := godotenv.Load(".env"); err != nil {
+	// 	log.Fatal("Error al cargar el archivo .env")
+	// }
 
 	port := "5000"
 
