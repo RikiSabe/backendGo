@@ -5,6 +5,7 @@ import (
 	"backend/internal/models"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"time"
@@ -137,4 +138,29 @@ func createToken(username string) (string, error) {
 	}
 
 	return tokenString, nil
+}
+
+// VerifyToken verifies a given JWT token and returns the parsed token if valid
+func verifyToken(tokenString string) (*jwt.Token, error) {
+	// Parse the token with the secret key
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		// Ensure the signing method is HMAC
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return secretKey, nil
+	})
+
+	// Check for parsing errors
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if the token is valid
+	if !token.Valid {
+		return nil, fmt.Errorf("invalid token")
+	}
+
+	// Return the verified token
+	return token, nil
 }

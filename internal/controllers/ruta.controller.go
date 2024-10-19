@@ -18,10 +18,10 @@ func ObtenerRutas(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(&rutas); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 func ObtenerRuta(w http.ResponseWriter, r *http.Request) {

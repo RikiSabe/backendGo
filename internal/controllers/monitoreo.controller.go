@@ -26,12 +26,15 @@ var (
 	mu                   sync.Mutex
 )
 
-func (monitoreo) ObtenerUbicacionLecturadoresWS(w http.ResponseWriter, r *http.Request) {
+func (monitoreo) ObtenerUbicacionesLecturadorWS(w http.ResponseWriter, r *http.Request) {
 
 }
 
 // ObtenerUbicacionLecturadorWS permite al usuario conectarse para enviar ubicación
 func (monitoreo) ObtenerUbicacionLecturadorWS(w http.ResponseWriter, r *http.Request) {
+	tokenAuth := r.Header.Get("Authorization")
+	log.Println("token:", tokenAuth)
+	// ws// http://localhost:5000/endPoints?Authorization='Bearer adasdadasdkhoijn'
 	type Ubicacion struct {
 		Longitud float64 `json:"longitud"`
 		Latitud  float64 `json:"latitud"`
@@ -50,11 +53,24 @@ func (monitoreo) ObtenerUbicacionLecturadorWS(w http.ResponseWriter, r *http.Req
 
 	// Verificar el header de autorización
 	authorizationHeader := r.Header.Get("Authorization")
-	if err := verificarBearerHeader(authorizationHeader); err != nil {
+	token, err := verificarBearerHeader(authorizationHeader)
+	if err != nil {
 		log.Println("Encabezado de autorización inválido:", err)
 		return
 	}
-
+	jwtToken, err := verifyToken(token)
+	if err != nil {
+		return
+	}
+	claims, ok := jwtToken.Claims.(jwt.MapClaims)
+	if !ok || !jwtToken.Valid {
+		return
+	}
+	username, ok := claims["username"].(string)
+	if !ok {
+		return
+	}
+	log.Println(username)
 	// Agregar conexión al manager
 	mu.Lock()
 	managerUbicacionesWS.AddConn(ws)
@@ -87,16 +103,16 @@ func (monitoreo) ObtenerUbicacionLecturadorWS(w http.ResponseWriter, r *http.Req
 	// }
 }
 
-func verificarBearerHeader(authHeader string) error {
+func verificarBearerHeader(authHeader string) (string, error) {
 	// Verificar el encabezado de autorización
 	if authHeader == "" {
-		return fmt.Errorf("No se proporcionó el encabezado de autorización")
+		return "", fmt.Errorf("No se proporcionó el encabezado de autorización")
 	}
 	const bearerPrefix = "Bearer "
 	if !strings.HasPrefix(authHeader, bearerPrefix) {
-		return fmt.Errorf("El encabezado de autorización debe comenzar con Bearer ")
+		return "", fmt.Errorf("El encabezado de autorización debe comenzar con Bearer ")
 	}
-	return nil
+	return authHeader[len(bearerPrefix):], nil
 }
 
 func verificarToken(tokenString string) error {

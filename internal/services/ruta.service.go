@@ -11,12 +11,10 @@ type ruta struct {
 var Ruta ruta
 
 func (m *ruta) GetAll(l *[]models.Ruta) error {
-	tx := db.GDB.Begin()
-	if err := tx.Find(&l).Error; err != nil {
-		tx.Rollback()
+
+	if err := db.GDB.Find(&l).Error; err != nil {
 		return err
 	}
-	tx.Commit()
 	return nil
 }
 

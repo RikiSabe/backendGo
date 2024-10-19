@@ -18,10 +18,11 @@ func ObtenerCriticas(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(&criticas); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
+
 }
 
 func ObtenerCritica(w http.ResponseWriter, r *http.Request) {
@@ -53,11 +54,12 @@ func SubirCritica(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ha ocurrido un error al guardar en la BD", http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(&critica); err != nil {
 		http.Error(w, "Ha ocurrido un error al parsear a JSON", http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+
 }
 
 func ModificarCritica(w http.ResponseWriter, r *http.Request) {
