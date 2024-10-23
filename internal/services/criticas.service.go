@@ -12,7 +12,7 @@ var Critica critica
 
 func (m *critica) GetAll(l *[]models.Critica) error {
 	tx := db.GDB.Begin()
-	if err := tx.Find(&l).Error; err != nil {
+	if err := tx.Order("cod asc").Find(&l).Error; err != nil {
 		tx.Rollback()
 		return err
 	}
