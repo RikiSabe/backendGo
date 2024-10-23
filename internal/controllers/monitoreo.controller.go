@@ -11,34 +11,78 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type monitoreo struct {
-}
+type monitoreo struct{}
 
 type Localizacion struct {
 	X float64 `json:"x"`
 	Y float64 `json:"y"`
 }
 
+type Ubicacion struct {
+	Longitud float64 `json:"longitud"`
+	Latitud  float64 `json:"latitud"`
+}
+
 var (
-	Monitoreo            monitoreo
-	channelUbicaciones   = make(chan Localizacion)
+	Monitoreo monitoreo
+	//Mobile
 	managerUbicacionesWS = NewWebSocketManager()
-	mu                   sync.Mutex
+	//Web
+	managerAdminWS          = NewWebSocketManager()
+	mu                      sync.Mutex
+	channelUbicacionesUsers = make(chan map[string]Ubicacion, 10)
+	ubicacionesUsers        = make(map[string]Ubicacion) // Cambiado a un mapa
 )
 
+// Para Web
 func (monitoreo) ObtenerUbicacionesLecturadorWS(w http.ResponseWriter, r *http.Request) {
+	var upgrader = websocket.Upgrader{
+		CheckOrigin: func(r *http.Request) bool {
+			// Aquí puedes permitir todas las solicitudes, aunque deberías personalizarlo según tus necesidades.
+			return true
+		},
+	}
+	// Establecer la conexión WebSocket
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("Error al hacer upgrade a WebSocket:", err)
+		return
+	}
+	defer func() {
+		log.Println("Cerrando conexión WebSocket")
+		ws.Close() // Asegura que la conexión se cierra
+	}()
 
+	managerAdminWS.AddConn(ws)
+
+	// Configurar un manejador de cierre
+	ws.SetCloseHandler(func(code int, text string) error {
+		log.Println("La conexión WebSocket se ha cerrado:", text)
+		managerAdminWS.RemoveConn(ws) // Opcional: remueve la conexión del manager
+		return nil
+	})
+
+	for {
+		select {
+		case ch := <-channelUbicacionesUsers:
+			// Transmitir la ubicación al cliente
+			log.Println(ch)
+			managerAdminWS.Broadcast(ch)
+
+		default:
+			// Verifica si hay errores en la conexión
+			if err := ws.WriteMessage(websocket.PingMessage, nil); err != nil {
+				log.Println("Error al enviar mensaje de ping:", err)
+				return // Cierra la conexión en caso de error
+			}
+		}
+	}
 }
 
 // ObtenerUbicacionLecturadorWS permite al usuario conectarse para enviar ubicación
 func (monitoreo) ObtenerUbicacionLecturadorWS(w http.ResponseWriter, r *http.Request) {
 	tokenAuth := r.Header.Get("Authorization")
 	log.Println("token:", tokenAuth)
-	// ws// http://localhost:5000/endPoints?Authorization='Bearer adasdadasdkhoijn'
-	type Ubicacion struct {
-		Longitud float64 `json:"longitud"`
-		Latitud  float64 `json:"latitud"`
-	}
 
 	var location Ubicacion
 	var upgrader = websocket.Upgrader{}
@@ -52,59 +96,73 @@ func (monitoreo) ObtenerUbicacionLecturadorWS(w http.ResponseWriter, r *http.Req
 	defer ws.Close()
 
 	// Verificar el header de autorización
-	authorizationHeader := r.Header.Get("Authorization")
-	token, err := verificarBearerHeader(authorizationHeader)
+	token, err := verificarBearerHeader(tokenAuth)
 	if err != nil {
 		log.Println("Encabezado de autorización inválido:", err)
 		return
 	}
+
 	jwtToken, err := verifyToken(token)
-	if err != nil {
+	if err != nil || !jwtToken.Valid {
+		log.Println("Token inválido:", err)
 		return
 	}
+
 	claims, ok := jwtToken.Claims.(jwt.MapClaims)
-	if !ok || !jwtToken.Valid {
+	if !ok {
+		log.Println("Error al obtener claims del token")
 		return
 	}
+
 	username, ok := claims["username"].(string)
 	if !ok {
+		log.Println("No se pudo obtener el nombre de usuario del token")
 		return
 	}
 	log.Println(username)
+
 	// Agregar conexión al manager
 	mu.Lock()
 	managerUbicacionesWS.AddConn(ws)
 	mu.Unlock()
+
 	log.Printf("Cantidad de conexiones: %d", len(managerUbicacionesWS.conns))
-	// Loop para leer ubicaciones enviadas por el cliente
+
 	for {
-		// Leer ubicación en formato JSON
 		err := ws.ReadJSON(&location)
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err) {
 				log.Println("Conexión cerrada inesperadamente:", err)
+				mu.Lock()
 				managerUbicacionesWS.RemoveConn(ws)
+				mu.Unlock()
 			} else {
 				log.Println("Error al leer JSON:", err)
 			}
-			break // Salir del loop en caso de error
+			mu.Lock()
+			delete(ubicacionesUsers, username)
+			channelUbicacionesUsers <- ubicacionesUsers
+			mu.Unlock()
+			break
 		}
 
-		// Loguear la ubicación recibida
+		// Validar la ubicación
+		if location.Longitud < -180 || location.Longitud > 180 || location.Latitud < -90 || location.Latitud > 90 {
+			log.Println("Ubicación inválida recibida:", location)
+			continue
+		}
+
+		// Agregar la ubicación del usuario al mapa
+		mu.Lock()
+		ubicacionesUsers[username] = location
+		channelUbicacionesUsers <- ubicacionesUsers
+		mu.Unlock()
+
 		log.Printf("Ubicación recibida: Longitud: %f, Latitud: %f\n", location.Longitud, location.Latitud)
 	}
-
-	// Lógica para manejar el canal (comentado)
-	// for {
-	// 	select {
-	// 	case ubicacion := <-channelUbicaciones: // Recibir ubicación del canal
-	// 		managerUbicacionesWS.Broadcast(ubicacion) // Enviar la ubicación a través de WebSocket
-	// 	}
-	// }
 }
 
 func verificarBearerHeader(authHeader string) (string, error) {
-	// Verificar el encabezado de autorización
 	if authHeader == "" {
 		return "", fmt.Errorf("No se proporcionó el encabezado de autorización")
 	}
@@ -113,20 +171,4 @@ func verificarBearerHeader(authHeader string) (string, error) {
 		return "", fmt.Errorf("El encabezado de autorización debe comenzar con Bearer ")
 	}
 	return authHeader[len(bearerPrefix):], nil
-}
-
-func verificarToken(tokenString string) error {
-	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return secretKey, nil
-	})
-
-	if err != nil {
-		return err
-	}
-
-	if !token.Valid {
-		return fmt.Errorf("invalid token")
-	}
-
-	return nil
 }

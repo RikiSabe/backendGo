@@ -36,7 +36,8 @@ func endPointsAPI(api *mux.Router) {
 	v1Medidores.HandleFunc("/pdf", c.Reporte.MedidoresPDF).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("", c.ObtenerMedidores).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("/{cod}", c.ObtenerMedidor).Methods(http.MethodGet)
-	v1Medidores.HandleFunc("", c.PostMedidor).Methods(http.MethodPost)
+	// v1Medidores.HandleFunc("", c.PostMedidor).Methods(http.MethodPost)
+	v1Medidores.HandleFunc("", c.AgregarMedidor).Methods(http.MethodPost)
 	v1Medidores.HandleFunc("/{cod}", c.ModificarMedidor).Methods(http.MethodPut)
 	v1Medidores.HandleFunc("/{cod}", c.EliminarMedidor).Methods(http.MethodDelete)
 	v1Medidores.HandleFunc("/byruta/{cod_ruta}", c.ObtenerMedidoresByRuta).Methods(http.MethodGet)
@@ -86,6 +87,8 @@ func endPointsWS(ws *mux.Router) {
 	v1 := ws.PathPrefix("/v1").Subrouter()
 	v1UbicacionLecturador := v1.PathPrefix("/ubicacion-lecturador").Subrouter()
 
-	// v1 Medidores
+	// v1 Medidores mobile
 	v1UbicacionLecturador.HandleFunc("", c.Monitoreo.ObtenerUbicacionLecturadorWS)
+	//Web
+	v1UbicacionLecturador.HandleFunc("/all", c.Monitoreo.ObtenerUbicacionesLecturadorWS)
 }

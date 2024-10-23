@@ -90,21 +90,21 @@ type critica struct {
 
 func (o critica) GetHeader() core.Row {
 	return row.New(10).Add(
-		text.NewCol(2, "N°", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(2, "COD", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(4, "DESCRIPCION", props.Text{Style: fontstyle.Bold}),
+		text.NewCol(1, "N°", props.Text{Style: fontstyle.Bold}),
+		text.NewCol(1, "COD", props.Text{Style: fontstyle.Bold}),
+		text.NewCol(6, "DESCRIPCION", props.Text{Style: fontstyle.Bold}),
 		text.NewCol(2, "TIPO", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(2, "ESTADO", props.Text{Style: fontstyle.Bold}),
+		text.NewCol(1, "ESTADO", props.Text{Style: fontstyle.Bold}),
 	)
 }
 
 func (o critica) GetContent(i int) core.Row {
-	r := row.New(6).Add(
-		text.NewCol(2, strconv.Itoa(i+1)), // Agregar el índice (N°)
-		text.NewCol(2, strconv.FormatUint(uint64(o.COD), 10)),
-		text.NewCol(4, o.Descripcion),
+	r := row.New(10).Add(
+		text.NewCol(1, strconv.Itoa(i+1)), // Agregar el índice (N°)
+		text.NewCol(1, strconv.FormatUint(uint64(o.COD), 10)),
+		text.NewCol(6, o.Descripcion),
 		text.NewCol(2, o.Tipo),
-		text.NewCol(2, o.Estado),
+		text.NewCol(1, o.Estado),
 	)
 
 	if i%2 == 0 {

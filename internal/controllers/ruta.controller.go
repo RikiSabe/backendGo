@@ -35,12 +35,12 @@ func ObtenerRuta(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
-
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(&ruta); err != nil {
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
-	w.WriteHeader(http.StatusOK)
+
 }
 
 func SubirRuta(w http.ResponseWriter, r *http.Request) {
