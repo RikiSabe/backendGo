@@ -12,6 +12,21 @@ import (
 	"gorm.io/gorm"
 )
 
+func CantidadCriticas(w http.ResponseWriter, r *http.Request) {
+	var totalCriticas int64
+
+	if err := services.Critica.CountActivos(&totalCriticas); err != nil {
+		http.Error(w, "Ha ocurrido un error al contar los medidores activos", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(totalCriticas); err != nil {
+		http.Error(w, "Error al codificar JSON", http.StatusInternalServerError)
+		return
+	}
+}
+
 func ObtenerCriticas(w http.ResponseWriter, r *http.Request) {
 	var criticas []models.Critica
 	if err := services.Critica.GetAll(&criticas); err != nil {

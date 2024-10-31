@@ -12,12 +12,49 @@ import (
 	"gorm.io/gorm"
 )
 
+func CantidadRutas(w http.ResponseWriter, r *http.Request) {
+	var totalRutas int64
+
+	if err := services.Ruta.CountActivos(&totalRutas); err != nil {
+		http.Error(w, "Ha ocurrido un error al contar los medidores activos", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(totalRutas); err != nil {
+		http.Error(w, "Error al codificar JSON", http.StatusInternalServerError)
+		return
+	}
+}
+
 func ObtenerRutas(w http.ResponseWriter, r *http.Request) {
 	var rutas []models.Ruta
 	if err := services.Ruta.GetAll(&rutas); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(&rutas); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+	}
+}
+
+func ObtenerRutasLibres(w http.ResponseWriter, r *http.Request) {
+	var rutas []struct {
+		NombreRuta string `json:"nombre_ruta"`
+		CodRuta    uint   `json:"cod_ruta"`
+	}
+
+	query := `SELECT r.nombre as nombre_ruta, r.cod as cod_ruta FROM ruta AS r
+		LEFT JOIN grupo AS g ON r.cod = g.cod_ruta
+		WHERE g.cod_ruta IS NULL;`
+
+	tx := db.GDB.Begin()
+	if err := tx.Raw(query).Find(&rutas).Error; err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	tx.Commit()
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(&rutas); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

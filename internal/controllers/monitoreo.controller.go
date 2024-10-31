@@ -20,8 +20,9 @@ type Localizacion struct {
 }
 
 type Ubicacion struct {
-	Longitud float64 `json:"longitud"`
-	Latitud  float64 `json:"latitud"`
+	Longitud  float64 `json:"longitud"`
+	Latitud   float64 `json:"latitud"`
+	UltimaVez string  `json:"ultimaVez"`
 }
 
 var (
@@ -67,6 +68,8 @@ func (monitoreo) ObtenerUbicacionesLecturadorWS(w http.ResponseWriter, r *http.R
 	// Configurar ticker para enviar pings periódicos
 	pingTicker := time.NewTicker(30 * time.Second) // Ajusta el intervalo de pings según sea necesario
 	defer pingTicker.Stop()
+
+	managerAdminWS.Broadcast(ubicacionesUsers)
 
 	for {
 		select {
@@ -195,11 +198,12 @@ func (monitoreo) ObtenerUbicacionLecturadorWS(w http.ResponseWriter, r *http.Req
 				log.Println("Error al leer JSON:", err)
 			}
 			mu.Lock()
-			delete(ubicacionesUsers, username)
 			channelUbicacionesUsers <- ubicacionesUsers
 			mu.Unlock()
 			break
 		}
+		now := time.Now()
+		location.UltimaVez = now.Format("2006-01-02 15:04:05")
 
 		// Validar la ubicación
 		if location.Longitud < -180 || location.Longitud > 180 || location.Latitud < -90 || location.Latitud > 90 {

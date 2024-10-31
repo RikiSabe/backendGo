@@ -19,6 +19,25 @@ type usuario struct {
 
 var Usuario usuario
 
+func (usuario) CantidadLecturadores(w http.ResponseWriter, r *http.Request) {
+	var totalLecturadores int64
+
+	query := `SELECT COUNT(*) FROM usuario WHERE rol = 'lecturador';`
+
+	tx := db.GDB.Begin()
+	if err := tx.Raw(query).Scan(&totalLecturadores).Error; err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	tx.Commit()
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(totalLecturadores); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
 func (usuario) ObtenerLecturadores(w http.ResponseWriter, r *http.Request) {
 	var lecturadores []struct {
 		CodPersona uint   `json:"codPersona"`
@@ -48,6 +67,38 @@ func (usuario) ObtenerLecturadores(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func (usuario) ObtenerLecturadoresLibres(w http.ResponseWriter, r *http.Request) {
+	var lecturadores []struct {
+		CodPersona uint   `json:"codPersona"`
+		Usuario    string `json:"usuario"`
+	}
+	query := `select u.cod_persona, u.usuario 
+		from usuario as u
+		where u.cod_grupo is null and u.rol = 'lecturador';`
+
+	tx := db.GDB.Begin()
+	if err := tx.Raw(query).Find(&lecturadores).Error; err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	tx.Commit()
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(&lecturadores); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+// func (usuario) ObtenerEncargado(w http.ResponseWriter, r *http.Request){
+// 	var encargado struct {
+// 		NombreCompleto string `json:"nombreCompleto"`
+// 		Usuario string `json:"usuario"`
+// 		CI string `json:"ci"`
+// 	}
+// 	codEncargado := mux.Vars(r)["cod"]
+
+// }
 
 func (usuario) ObtenerLecturadorPorCodPersona(w http.ResponseWriter, r *http.Request) {
 	var personaLecturador struct {
@@ -92,19 +143,22 @@ func (usuario) ObtenerLecturadorPorUsuario(w http.ResponseWriter, r *http.Reques
 		CI         string `json:"ci"`
 		CodUsuario uint   `json:"codUsuario"`
 		Usuario    string `json:"usuario"`
-		CodRuta    uint   `json:"codRuta,omitempty"`
+		CodRuta    uint   `json:"codRuta,omitempty"` // por el del grupo
 		NombreRuta string `json:"nombreRuta,omitempty"`
 	}
 
 	// Obtiene el nombre de usuario desde la URL
 	nombreUsuario := mux.Vars(r)["usuario"]
 
-	query := `select p.cod as cod_persona, p.nombre, p.apellido, p.ci as ci, 
-				u.cod as cod_usuario, u.usuario, r.cod as cod_ruta, r.nombre as nombre_ruta 
-			  from persona p
-			  left join usuario u on u.cod_persona = p.cod
-			  left join ruta r on u.cod_ruta = r.cod
-			  where u.rol = 'lecturador' and u.usuario = ?;`
+	query := `SELECT 
+					p.cod AS cod_persona, p.nombre, p.apellido, p.ci AS ci, 
+					u.cod AS cod_usuario, u.usuario, 
+					r.cod AS cod_ruta, r.nombre AS nombre_ruta
+				FROM persona p
+				LEFT JOIN usuario u ON u.cod_persona = p.cod
+				LEFT JOIN grupo g ON g.cod_usuario = u.cod
+				LEFT JOIN ruta r ON g.cod_ruta = r.cod
+				WHERE u.rol = 'lecturador'  AND u.usuario = ? LIMIT 1;`
 
 	tx := db.GDB.Begin()
 	if err := tx.Raw(query, nombreUsuario).Scan(&lecturador).Error; err != nil {
@@ -248,21 +302,21 @@ func (usuario) AgregarLecturador(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Verificar la existencia del grupo
-	if err := tx.Model(models.Grupo{}).Where("cod = ?", lecturador.CodGrupo).First(&models.Grupo{}).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			http.Error(w, "Grupo no encontrado", http.StatusNotFound)
-			return
-		}
-		tx.Rollback()
-		http.Error(w, "Error al verificar el grupo", http.StatusInternalServerError)
-		return
-	}
+	// if err := tx.Model(models.Grupo{}).Where("cod = ?", lecturador.CodGrupo).First(&models.Grupo{}).Error; err != nil {
+	// 	if errors.Is(err, gorm.ErrRecordNotFound) {
+	// 		http.Error(w, "Grupo no encontrado", http.StatusNotFound)
+	// 		return
+	// 	}
+	// 	tx.Rollback()
+	// 	http.Error(w, "Error al verificar el grupo", http.StatusInternalServerError)
+	// 	return
+	// }
 
 	// Crear el objeto Usuario
 	lecturadorR := models.Usuario{
 		Usuario:  lecturador.Usuario,
 		Rol:      "lecturador",
-		CodGrupo: &lecturador.CodGrupo,
+		CodGrupo: nil,
 		CodRuta:  lecturador.CodRuta,
 		Persona: &models.Persona{
 			Nombre:   lecturador.Nombre,
@@ -304,5 +358,51 @@ func (usuario) AgregarLecturador(w http.ResponseWriter, r *http.Request) {
 
 	// Confirmar la transacción
 	tx.Commit()
+	w.Write([]byte(newPassword))
+}
+
+func (usuario) CambiarCredencialLecturador(w http.ResponseWriter, r *http.Request) {
+	codLecturador := mux.Vars(r)["cod_lecturador"]
+
+	tx := db.GDB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	var lecturador models.Usuario
+	if err := tx.Where("cod = ?", codLecturador).First(&lecturador).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Usuario no encontrado", http.StatusNotFound)
+			return
+		}
+		tx.Rollback()
+		http.Error(w, "Error al buscar el usuario", http.StatusInternalServerError)
+		return
+	}
+
+	newPassword, err := password.Generate(6, 2, 0, false, false)
+	if err != nil {
+		http.Error(w, "Error al generar la nueva contraseña", http.StatusInternalServerError)
+		return
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
+	if err != nil {
+		http.Error(w, "Error al cifrar la nueva contraseña", http.StatusInternalServerError)
+		return
+	}
+
+	// Actualizar la contraseña del lecturador
+	lecturador.Contra = string(hashedPassword)
+	if err := tx.Save(&lecturador).Error; err != nil {
+		tx.Rollback()
+		http.Error(w, "Error al actualizar la contraseña del usuario", http.StatusInternalServerError)
+		return
+	}
+
+	tx.Commit()
+
 	w.Write([]byte(newPassword))
 }

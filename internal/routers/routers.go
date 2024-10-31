@@ -2,6 +2,7 @@ package routers
 
 import (
 	c "backend/internal/controllers"
+	// "backend/internal/middleware"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -27,13 +28,13 @@ func endPointsAPI(api *mux.Router) {
 	v1Rutas := v1.PathPrefix("/rutas").Subrouter()
 	v1Usuarios := v1.PathPrefix("/usuarios").Subrouter()
 	v1Grupos := v1.PathPrefix("/grupos").Subrouter()
-
 	// v1 Personas
 	v1Personas.HandleFunc("", c.ObtenerPersonas).Methods(http.MethodGet)
 	v1Personas.HandleFunc("", c.SubirPersonas).Methods(http.MethodPost)
 
 	// v1 Medidores
 	v1Medidores.HandleFunc("/pdf", c.Reporte.MedidoresPDF).Methods(http.MethodGet)
+	v1Medidores.HandleFunc("/cantidad", c.CantidadMedidores).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("", c.ObtenerMedidores).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("/{cod}", c.ObtenerMedidor).Methods(http.MethodGet)
 	// v1Medidores.HandleFunc("", c.PostMedidor).Methods(http.MethodPost)
@@ -43,6 +44,7 @@ func endPointsAPI(api *mux.Router) {
 	v1Medidores.HandleFunc("/byruta/{cod_ruta}", c.ObtenerMedidoresByRuta).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("/direcciones/{cod_ruta}", c.ObtenerDireccionMedidores).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("/direccion/{cod_direccion}", c.ObtenerDireccion).Methods(http.MethodGet)
+	v1Medidores.HandleFunc("/direccion/modificar/{cod_direccion}", c.ModificarDireccion).Methods(http.MethodPut)
 
 	// v1 Lecturaciones
 	v1Lecturaciones.HandleFunc("", c.ObtenerLecturaciones).Methods(http.MethodGet)
@@ -53,12 +55,15 @@ func endPointsAPI(api *mux.Router) {
 
 	// v1 Criticas
 	v1Criticas.HandleFunc("/pdf", c.Reporte.CriticaPDF).Methods(http.MethodGet)
+	v1Criticas.HandleFunc("/cantidad", c.CantidadCriticas).Methods(http.MethodGet)
 	v1Criticas.HandleFunc("", c.ObtenerCriticas).Methods(http.MethodGet)
 	v1Criticas.HandleFunc("/{cod}", c.ObtenerCritica).Methods(http.MethodGet)
 	v1Criticas.HandleFunc("", c.SubirCritica).Methods(http.MethodPost)
 	v1Criticas.HandleFunc("/{cod}", c.ModificarCritica).Methods(http.MethodPut)
 
 	// v1 Rutas
+	v1Rutas.HandleFunc("/cantidad", c.CantidadRutas).Methods(http.MethodGet)
+	v1Rutas.HandleFunc("/libres", c.ObtenerRutasLibres).Methods(http.MethodGet)
 	v1Rutas.HandleFunc("", c.ObtenerRutas).Methods(http.MethodGet)
 	v1Rutas.HandleFunc("/{cod}", c.ObtenerRuta).Methods(http.MethodGet)
 	v1Rutas.HandleFunc("", c.SubirRuta).Methods(http.MethodPost)
@@ -72,15 +77,21 @@ func endPointsAPI(api *mux.Router) {
 	v1Usuarios.HandleFunc("/lecturador/{cod_lecturador}", c.Usuario.ModificarDatosLecturador).Methods(http.MethodPut)
 	v1Usuarios.HandleFunc("/lecturador", c.Usuario.AgregarLecturador).Methods(http.MethodPost)
 	v1Usuarios.HandleFunc("/lecturadorbyuser/{usuario}", c.Usuario.ObtenerLecturadorPorUsuario).Methods(http.MethodGet)
+	v1Usuarios.HandleFunc("/cantidad-lecturadores", c.Usuario.CantidadLecturadores).Methods(http.MethodGet)
+	v1Usuarios.HandleFunc("/lecturador/nuevacredencial/{cod_lecturador}", c.Usuario.CambiarCredencialLecturador).Methods(http.MethodPut)
+	v1Usuarios.HandleFunc("/lecturador-libre", c.Usuario.ObtenerLecturadoresLibres).Methods(http.MethodGet)
 
 	//v1 Login
 	v1.HandleFunc("/login", c.Auth.AuthLogin).Methods(http.MethodPost)
 	v1.HandleFunc("/loginweb", c.Auth.AuthLoginWeb).Methods(http.MethodPost)
 
 	// Grupos
+	v1Grupos.HandleFunc("/cantidades", c.ObtenerDatosGenerales).Methods(http.MethodGet)
+	v1Grupos.HandleFunc("/agregar-grupo/{cod_persona}", c.SubirGrupo).Methods(http.MethodPost)
+	v1Grupos.HandleFunc("/quitar-grupo/{cod_usuario}", c.QuitarCodGrupo).Methods(http.MethodPut)
+	v1Grupos.HandleFunc("/eliminar-grupo/{cod}", c.EliminarGrupo).Methods(http.MethodDelete)
 	v1Grupos.HandleFunc("", c.ObtenerGrupos).Methods(http.MethodGet)
-	v1Grupos.HandleFunc("", c.SubirGrupo).Methods(http.MethodPost)
-
+	v1Grupos.HandleFunc("/{cod_grupo}", c.ObtenerGrupoPorCod).Methods(http.MethodGet)
 }
 
 func endPointsWS(ws *mux.Router) {

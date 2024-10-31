@@ -10,20 +10,38 @@ type medidor struct {
 
 var Medidor medidor
 
+func (m *medidor) CountActivos(total *int64) error {
+	// Inicia una transacción solo para la consulta
+	tx := db.GDB.Begin()
+
+	// Cuenta los medidores activos
+	if err := tx.Model(&models.Medidor{}).Where("estado = ?", "activo").Count(total).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
 func (m *medidor) GetAll(l *[]models.Medidor) error {
 	tx := db.GDB.Begin()
 	// Buscar los medidores asegurarse de que esté activo
-	if err := tx.Where("estado = ?", "activo").Find(&l).Error; err != nil {
+	if err := tx.Where("estado = ?", "activo").Preload("Ruta").Find(&l).Error; err != nil {
 		tx.Rollback()
 		return err
+	}
+	for i := range *l {
+		(*l)[i].NombreRuta = (*l)[i].Ruta.Nombre
 	}
 	tx.Commit()
 	return nil
 }
+
 func (m *medidor) GetByCod(i *models.Medidor, id string) error {
 	tx := db.GDB.Begin()
 	// Buscar el medidor por ID y asegurarse de que esté activo
-	if err := tx.Where("cod = ? and estado = ?", id, "activo").First(&i).Error; err != nil {
+	if err := tx.Where("cod = ?", id).First(&i).Error; err != nil {
 		tx.Rollback()
 		return err
 	}

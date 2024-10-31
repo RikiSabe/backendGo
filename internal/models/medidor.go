@@ -9,6 +9,8 @@ type Medidor struct {
 	CodDireccion  *uint         `json:"codDireccion"`
 	Tipo          string        `json:"tipo"`
 	Lecturaciones []Lecturacion `gorm:"foreignKey:COD" json:"lecturaciones,omitempty"`
+	Ruta          Ruta          `gorm:"foreignKey:CodRuta;references:COD" json:"-"`
+	NombreRuta    string        `gorm:"-" json:"nombreRuta"`
 }
 
 func (Medidor) TableName() string {

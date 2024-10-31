@@ -22,6 +22,21 @@ var (
 
 )
 */
+func CantidadMedidores(w http.ResponseWriter, r *http.Request) {
+	var totalMedidoresActivos int64
+
+	if err := services.Medidor.CountActivos(&totalMedidoresActivos); err != nil {
+		http.Error(w, "Ha ocurrido un error al contar los medidores activos", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(totalMedidoresActivos); err != nil {
+		http.Error(w, "Error al codificar JSON", http.StatusInternalServerError)
+		return
+	}
+}
+
 func ObtenerMedidores(w http.ResponseWriter, r *http.Request) {
 	var medidores []models.Medidor
 
@@ -72,7 +87,7 @@ func ObtenerMedidoresByRuta(w http.ResponseWriter, r *http.Request) {
 
 	// Consulta SQL personalizada para obtener los medidores con sus coordenadas
 	query := `SELECT m.cod as cod_medidor, m.estado, m.medicion, m.nombre, m.propietario, m.cod_ruta, 
-					 d.longitud, d.latitud
+			  d.longitud, d.latitud
 			  FROM medidor m
 			  LEFT JOIN direccion d ON m.cod_direccion = d.cod
 			  WHERE m.cod_ruta = ? AND m.estado = 'activo';`
@@ -317,6 +332,10 @@ func ModificarMedidor(w http.ResponseWriter, r *http.Request) {
 	// Actualizar los campos del medidor existente con los valores del medidor actualizado
 	medidorExistente.Nombre = medidorActualizado.Nombre
 	medidorExistente.Propietario = medidorActualizado.Propietario
+	medidorExistente.CodRuta = medidorActualizado.CodRuta
+	medidorExistente.Estado = medidorActualizado.Estado
+	medidorExistente.Tipo = medidorActualizado.Tipo
+
 	// Guardar los cambios en el medidor existente
 	if err := db.GDB.Save(&medidorExistente).Error; err != nil {
 		http.Error(w, "Ha ocurrido un error al actualizar el medidor", http.StatusInternalServerError)
@@ -330,41 +349,36 @@ func ModificarMedidor(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-/*
-func ObtenerMedidoresWS(w http.ResponseWriter, r *http.Request) {
-	upgrader := NewUpgrader()
-	ws, _ := upgrader.Upgrade(w, r, nil)
-	defer ws.Close()
-	// get socket
-	var medidores []models.Medidor
-	wsManagerMedidores.AddConn(ws)
-	tx := db.GDB.Begin()
-	if err := tx.Find(&medidores).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
+func ModificarDireccion(w http.ResponseWriter, r *http.Request) {
+	var direccionActualizada models.Direccion
+	codigoDireccion := mux.Vars(r)["cod_direccion"]
 
-			return
-		} else {
-			tx.Rollback()
-			return
-		}
-	} else {
-		err := ws.WriteJSON(&medidores)
-		if err != nil {
-			return
-		}
+	// Buscar la dirección existente por su código
+	var direccionExistente models.Direccion
+	if err := services.Direccion.GetByCod(&direccionExistente, codigoDireccion); err != nil {
+		http.Error(w, "Dirección no encontrada", http.StatusNotFound)
+		return
 	}
 
-	tx.Commit()
-	for {
-		select {
-		case medidoresUpdated := <-medidoresChannel:
-			wsManagerMedidores.Broadcast(&medidoresUpdated)
-		}
+	// Decodificar el JSON recibido en el request
+	if err := json.NewDecoder(r.Body).Decode(&direccionActualizada); err != nil {
+		http.Error(w, "Error al decodificar JSON", http.StatusBadRequest)
+		return
+	}
+
+	// Actualizar los campos de la dirección existente con los valores de la dirección actualizada
+	direccionExistente.Longitud = direccionActualizada.Longitud
+	direccionExistente.Latitud = direccionActualizada.Latitud
+
+	// Guardar los cambios en la dirección existente
+	if err := db.GDB.Save(&direccionExistente).Error; err != nil {
+		http.Error(w, "Ha ocurrido un error al actualizar la dirección", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(&direccionExistente); err != nil {
+		http.Error(w, "Error al codificar JSON", http.StatusInternalServerError)
+		return
 	}
 }
-
-func ActualizarMedidor(w http.ResponseWriter, r *http.Request) {
-	//cod := mux.Vars(r)["cod"]
-
-}
-*/

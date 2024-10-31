@@ -27,6 +27,7 @@ func (auth) AuthLogin(w http.ResponseWriter, r *http.Request) {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
+
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Solicitud inválida"})
@@ -78,6 +79,7 @@ func (auth) AuthLoginWeb(w http.ResponseWriter, r *http.Request) {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
+
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Solicitud inválida"})
@@ -136,7 +138,6 @@ func createToken(username string) (string, error) {
 	if err != nil {
 		return "", err
 	}
-
 	return tokenString, nil
 }
 

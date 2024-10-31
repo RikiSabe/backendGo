@@ -5,11 +5,15 @@ import (
 )
 
 type Grupo struct {
-	COD        uint      `gorm:"primaryKey;autoIncrement" json:"cod"`
-	CodUsuario *uint     `json:"cod_usuario"`
-	CodRuta    *uint     `json:"cod_ruta"`
-	CreatedAt  time.Time `gorm:"default:now()"`
-	UpdatedAt  time.Time
+	COD           uint      `gorm:"primaryKey;autoIncrement" json:"cod"`
+	CodUsuario    *uint     `json:"cod_usuario"`
+	CodRuta       *uint     `json:"cod_ruta"`
+	CreatedAt     time.Time `gorm:"default:now()"`
+	UpdatedAt     time.Time
+	Ruta          *Ruta    `gorm:"foreignKey:CodRuta;references:COD" json:"-"`
+	NombreRuta    *string  `json:"nombre_ruta"`
+	Usuario       *Usuario `gorm:"foreignKey:CodUsuario;references:COD" json:"-"`
+	NombreUsuario *string  `json:"nombre_usuario"`
 }
 
 func (Grupo) TableName() string {

@@ -10,6 +10,20 @@ type critica struct {
 
 var Critica critica
 
+func (m *critica) CountActivos(total *int64) error {
+	// Inicia una transacción solo para la consulta
+	tx := db.GDB.Begin()
+
+	// Cuenta los medidores activos
+	if err := tx.Model(&models.Critica{}).Where("estado = ?", "activo").Count(total).Error; err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	tx.Commit()
+	return nil
+}
+
 func (m *critica) GetAll(l *[]models.Critica) error {
 	tx := db.GDB.Begin()
 	if err := tx.Order("cod asc").Find(&l).Error; err != nil {
