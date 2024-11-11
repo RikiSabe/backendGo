@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/http"
 
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/gorilla/mux"
 	"github.com/sethvargo/go-password/password"
 	"golang.org/x/crypto/bcrypt"
@@ -99,6 +100,68 @@ func (usuario) ObtenerLecturadoresLibres(w http.ResponseWriter, r *http.Request)
 // 	codEncargado := mux.Vars(r)["cod"]
 
 // }
+
+func (usuario) ObtenerDatosAdmin(w http.ResponseWriter, r *http.Request) {
+	var admin struct {
+		Nombre   string `json:"nombre"`
+		Apellido string `json:"apellido"`
+		Usuario  string `json:"usuario"`
+		CI       string `json:"ci"`
+	}
+
+	// Extract and verify JWT token from the header
+	tokenAuth := r.Header.Get("Authorization")
+	if tokenAuth == "" {
+		http.Error(w, "Authorization header is missing", http.StatusUnauthorized)
+		return
+	}
+
+	token, err := verificarBearerHeader(tokenAuth)
+	if err != nil {
+		http.Error(w, "Invalid authorization header format", http.StatusUnauthorized)
+		return
+	}
+
+	jwtToken, err := verifyToken(token)
+	if err != nil || !jwtToken.Valid {
+		http.Error(w, "Invalid or expired token", http.StatusUnauthorized)
+		return
+	}
+
+	// Retrieve 'cod' claim
+	claims, ok := jwtToken.Claims.(jwt.MapClaims)
+	if !ok {
+		http.Error(w, "Failed to retrieve claims from token", http.StatusInternalServerError)
+		return
+	}
+
+	codUsuario, ok := claims["cod"].(string)
+	if !ok {
+		http.Error(w, "Invalid user code in token claims", http.StatusBadRequest)
+		return
+	}
+
+	// Query for admin data
+	query := `SELECT p.nombre, p.apellido, p.ci as ci, u.usuario 
+              FROM persona p
+              LEFT JOIN usuario u ON u.cod_persona = p.cod
+              WHERE p.cod = ? AND u.rol = 'admin';`
+
+	if err := db.GDB.Raw(query, codUsuario).Scan(&admin).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Admin not found", http.StatusNotFound)
+			return
+		}
+		http.Error(w, "Database query error", http.StatusInternalServerError)
+		return
+	}
+
+	// Respond with admin data as JSON
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(&admin); err != nil {
+		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
+	}
+}
 
 func (usuario) ObtenerLecturadorPorCodPersona(w http.ResponseWriter, r *http.Request) {
 	var personaLecturador struct {

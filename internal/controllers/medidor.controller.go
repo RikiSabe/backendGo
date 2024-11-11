@@ -13,15 +13,6 @@ import (
 	"gorm.io/gorm"
 )
 
-/*
-var (
-
-	mu                 sync.Mutex
-	medidoresChannel   = make(chan []models.Medidor)
-	wsManagerMedidores = NewWebSocketManager()
-
-)
-*/
 func CantidadMedidores(w http.ResponseWriter, r *http.Request) {
 	var totalMedidoresActivos int64
 
@@ -34,6 +25,24 @@ func CantidadMedidores(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewEncoder(w).Encode(totalMedidoresActivos); err != nil {
 		http.Error(w, "Error al codificar JSON", http.StatusInternalServerError)
 		return
+	}
+}
+
+func CantidadMedidoresbyLecturador(w http.ResponseWriter, r *http.Request) {
+	var cod = mux.Vars(r)["cod"]
+	var medidoresdiarios int64
+	var query = `SELECT COUNT(*) AS cantidad_medidores FROM medidor m WHERE m.cod_ruta = ?`
+
+	result := db.GDB.Raw(query, cod).Scan(&medidoresdiarios)
+	if result.Error != nil {
+		http.Error(w, result.Error.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(&medidoresdiarios); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
 	}
 }
 
@@ -52,22 +61,6 @@ func ObtenerMedidores(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
-
-// func ObtenerMedidoresByRuta(w http.ResponseWriter, r *http.Request) {
-// 	var medidores []models.Medidor
-// 	codigoRuta := mux.Vars(r)["cod_ruta"]
-
-// 	if err := services.Medidor.GetByRuta(&medidores, codigoRuta); err != nil {
-// 		http.Error(w, "Ha ocurrido un error al obtener la lista de medidores por ruta", http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	w.WriteHeader(http.StatusOK)
-// 	if err := json.NewEncoder(w).Encode(&medidores); err != nil {
-// 		http.Error(w, "Error al codificar JSON", http.StatusInternalServerError)
-// 		return
-// 	}
-// }
 
 func ObtenerMedidoresByRuta(w http.ResponseWriter, r *http.Request) {
 	// Estructura que combina los datos de Medidor y las coordenadas de Direccion

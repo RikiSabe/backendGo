@@ -35,6 +35,7 @@ func endPointsAPI(api *mux.Router) {
 	// v1 Medidores
 	v1Medidores.HandleFunc("/pdf", c.Reporte.MedidoresPDF).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("/cantidad", c.CantidadMedidores).Methods(http.MethodGet)
+	v1Medidores.HandleFunc("/cantidad-diaria/{cod}", c.CantidadMedidoresbyLecturador).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("", c.ObtenerMedidores).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("/{cod}", c.ObtenerMedidor).Methods(http.MethodGet)
 	// v1Medidores.HandleFunc("", c.PostMedidor).Methods(http.MethodPost)
@@ -50,24 +51,22 @@ func endPointsAPI(api *mux.Router) {
 	v1Lecturaciones.HandleFunc("", c.ObtenerLecturaciones).Methods(http.MethodGet)
 	v1Lecturaciones.HandleFunc("/{cod}", c.ObtenerLecturacion).Methods(http.MethodGet)
 	v1Lecturaciones.HandleFunc("", c.SubirLecturacion).Methods(http.MethodPost)
-	v1Lecturaciones.HandleFunc("/{cod}", c.ModificarLecturacion).Methods(http.MethodPut)
-	v1Lecturaciones.HandleFunc("/{cod}", c.EliminarLecturacion).Methods(http.MethodDelete)
 
 	// v1 Criticas
 	v1Criticas.HandleFunc("/pdf", c.Reporte.CriticaPDF).Methods(http.MethodGet)
 	v1Criticas.HandleFunc("/cantidad", c.CantidadCriticas).Methods(http.MethodGet)
-	v1Criticas.HandleFunc("", c.ObtenerCriticas).Methods(http.MethodGet)
 	v1Criticas.HandleFunc("/{cod}", c.ObtenerCritica).Methods(http.MethodGet)
-	v1Criticas.HandleFunc("", c.SubirCritica).Methods(http.MethodPost)
 	v1Criticas.HandleFunc("/{cod}", c.ModificarCritica).Methods(http.MethodPut)
+	v1Criticas.HandleFunc("", c.ObtenerCriticas).Methods(http.MethodGet)
+	v1Criticas.HandleFunc("", c.SubirCritica).Methods(http.MethodPost)
 
 	// v1 Rutas
 	v1Rutas.HandleFunc("/cantidad", c.CantidadRutas).Methods(http.MethodGet)
 	v1Rutas.HandleFunc("/libres", c.ObtenerRutasLibres).Methods(http.MethodGet)
-	v1Rutas.HandleFunc("", c.ObtenerRutas).Methods(http.MethodGet)
 	v1Rutas.HandleFunc("/{cod}", c.ObtenerRuta).Methods(http.MethodGet)
-	v1Rutas.HandleFunc("", c.SubirRuta).Methods(http.MethodPost)
 	v1Rutas.HandleFunc("/{cod}", c.ModificarRuta).Methods(http.MethodPut)
+	v1Rutas.HandleFunc("", c.ObtenerRutas).Methods(http.MethodGet)
+	v1Rutas.HandleFunc("", c.SubirRuta).Methods(http.MethodPost)
 
 	//v1 Usuarios
 	v1Usuarios.HandleFunc("/lecturador/pdf", c.Reporte.LecturadoresPDF).Methods(http.MethodGet)
@@ -80,6 +79,7 @@ func endPointsAPI(api *mux.Router) {
 	v1Usuarios.HandleFunc("/cantidad-lecturadores", c.Usuario.CantidadLecturadores).Methods(http.MethodGet)
 	v1Usuarios.HandleFunc("/lecturador/nuevacredencial/{cod_lecturador}", c.Usuario.CambiarCredencialLecturador).Methods(http.MethodPut)
 	v1Usuarios.HandleFunc("/lecturador-libre", c.Usuario.ObtenerLecturadoresLibres).Methods(http.MethodGet)
+	v1Usuarios.HandleFunc("/datos-admin", c.Usuario.ObtenerDatosAdmin).Methods(http.MethodGet)
 
 	//v1 Login
 	v1.HandleFunc("/login", c.Auth.AuthLogin).Methods(http.MethodPost)
@@ -97,7 +97,6 @@ func endPointsAPI(api *mux.Router) {
 func endPointsWS(ws *mux.Router) {
 	v1 := ws.PathPrefix("/v1").Subrouter()
 	v1UbicacionLecturador := v1.PathPrefix("/ubicacion-lecturador").Subrouter()
-
 	// v1 Medidores mobile
 	v1UbicacionLecturador.HandleFunc("", c.Monitoreo.ObtenerUbicacionLecturadorWS)
 	//Web
