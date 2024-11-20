@@ -185,8 +185,7 @@ func ObtenerDatosGenerales(w http.ResponseWriter, r *http.Request) {
 			(SELECT COUNT(m.cod) FROM medidor m) AS cantidad_medidores,
 			(SELECT COUNT(u.cod) FROM usuario u WHERE u.rol = 'lecturador') AS cantidad_lecturadores,
 			(SELECT COUNT(r.cod) FROM ruta r) AS cantidad_rutas,
-			(SELECT COUNT(c.cod) FROM critica c) AS cantidad_criticas;
-	`
+			(SELECT COUNT(c.cod) FROM critica c) AS cantidad_criticas;`
 
 	type CantidadesEntidades struct {
 		CantidadMedidores    uint64 `json:"cantidadMedidores"`

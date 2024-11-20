@@ -79,7 +79,7 @@ func ObtenerMedidoresByRuta(w http.ResponseWriter, r *http.Request) {
 	codigoRuta := mux.Vars(r)["cod_ruta"]
 
 	// Consulta SQL personalizada para obtener los medidores con sus coordenadas
-	query := `SELECT m.cod as cod_medidor, m.estado, m.medicion, m.nombre, m.propietario, m.cod_ruta, 
+	query := `SELECT m.cod as cod_medidor, m.estado, m.nombre, m.propietario, m.cod_ruta, 
 			  d.longitud, d.latitud
 			  FROM medidor m
 			  LEFT JOIN direccion d ON m.cod_direccion = d.cod

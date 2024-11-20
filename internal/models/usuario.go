@@ -9,7 +9,7 @@ type Usuario struct {
 	Contra  string `json:"contra"`
 	Estado  string `json:"estado"`
 	// Claves foráneas
-	CodRuta       uint          `json:"-"`
+	CodRuta       *uint         `json:"-"`
 	CodPersona    uint          `json:"-"`
 	Persona       *Persona      `gorm:"foreignKey:CodPersona"`
 	CodGrupo      *uint         `json:"-"`

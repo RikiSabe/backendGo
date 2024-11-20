@@ -9,8 +9,6 @@ import (
 )
 
 func InitEndPoints(r *mux.Router) {
-	// r.Use(middleware.LoggingHandler)
-
 	api := r.PathPrefix("/api").Subrouter()
 	ws := r.PathPrefix("/ws").Subrouter()
 
@@ -28,6 +26,7 @@ func endPointsAPI(api *mux.Router) {
 	v1Rutas := v1.PathPrefix("/rutas").Subrouter()
 	v1Usuarios := v1.PathPrefix("/usuarios").Subrouter()
 	v1Grupos := v1.PathPrefix("/grupos").Subrouter()
+
 	// v1 Personas
 	v1Personas.HandleFunc("", c.ObtenerPersonas).Methods(http.MethodGet)
 	v1Personas.HandleFunc("", c.SubirPersonas).Methods(http.MethodPost)

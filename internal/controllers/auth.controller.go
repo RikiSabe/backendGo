@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 	"time"
@@ -61,7 +62,7 @@ func (auth) AuthLogin(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Crear el token JWT
-	token, err := createToken(user.Username)
+	token, err := createToken(userR.COD, userR.Usuario)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Error al crear el token"})
@@ -111,9 +112,9 @@ func (auth) AuthLoginWeb(w http.ResponseWriter, r *http.Request) {
 		json.NewEncoder(w).Encode(map[string]string{"error": "Contraseña incorrecta"})
 		return
 	}
-
+	log.Println("codigito de usuario:", userR.COD)
 	// Crear el token JWT
-	token, err := createToken(user.Username)
+	token, err := createToken(userR.COD, user.Username)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Error al crear el token"})
@@ -126,9 +127,10 @@ func (auth) AuthLoginWeb(w http.ResponseWriter, r *http.Request) {
 }
 
 // createToken creates a new JWT token for a given username
-func createToken(username string) (string, error) {
+func createToken(cod uint, username string) (string, error) {
 	// Create a new JWT token with claims
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"cod":      cod,
 		"username": username,
 		"exp":      time.Now().Add(time.Hour * 24).Unix(), // Token expiration time
 	})

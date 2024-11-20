@@ -109,14 +109,7 @@ func (usuario) ObtenerDatosAdmin(w http.ResponseWriter, r *http.Request) {
 		CI       string `json:"ci"`
 	}
 
-	// Extract and verify JWT token from the header
-	tokenAuth := r.Header.Get("Authorization")
-	if tokenAuth == "" {
-		http.Error(w, "Authorization header is missing", http.StatusUnauthorized)
-		return
-	}
-
-	token, err := verificarBearerHeader(tokenAuth)
+	token, err := verificarBearerHeader(r.Header.Get("Authorization"))
 	if err != nil {
 		http.Error(w, "Invalid authorization header format", http.StatusUnauthorized)
 		return
@@ -135,17 +128,18 @@ func (usuario) ObtenerDatosAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	codUsuario, ok := claims["cod"].(string)
-	if !ok {
-		http.Error(w, "Invalid user code in token claims", http.StatusBadRequest)
-		return
-	}
+	codUsuario, _ := claims["cod"]
+	log.Println(codUsuario)
+	// if !ok {
+	// 	http.Error(w, "Invalid user code in token claims", http.StatusBadRequest)
+	// 	return
+	// }
 
 	// Query for admin data
-	query := `SELECT p.nombre, p.apellido, p.ci as ci, u.usuario 
+	query := `SELECT p.nombre, p.apellido, p.ci, u.usuario 
               FROM persona p
               LEFT JOIN usuario u ON u.cod_persona = p.cod
-              WHERE p.cod = ? AND u.rol = 'admin';`
+              WHERE p.cod = ? AND u.rol = 'admin' LIMIT 1;`
 
 	if err := db.GDB.Raw(query, codUsuario).Scan(&admin).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -354,15 +348,15 @@ func (usuario) AgregarLecturador(w http.ResponseWriter, r *http.Request) {
 	}()
 
 	// Verificar la existencia de la ruta
-	if err := tx.Model(models.Ruta{}).Where("cod = ?", lecturador.CodRuta).First(&models.Ruta{}).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			http.Error(w, "Ruta no encontrada", http.StatusNotFound)
-			return
-		}
-		tx.Rollback()
-		http.Error(w, "Error al verificar la ruta", http.StatusInternalServerError)
-		return
-	}
+	// if err := tx.Model(models.Ruta{}).Where("cod = ?", lecturador.CodRuta).First(&models.Ruta{}).Error; err != nil {
+	// 	if errors.Is(err, gorm.ErrRecordNotFound) {
+	// 		http.Error(w, "Ruta no encontrada", http.StatusNotFound)
+	// 		return
+	// 	}
+	// 	tx.Rollback()
+	// 	http.Error(w, "Error al verificar la ruta", http.StatusInternalServerError)
+	// 	return
+	// }
 
 	// Verificar la existencia del grupo
 	// if err := tx.Model(models.Grupo{}).Where("cod = ?", lecturador.CodGrupo).First(&models.Grupo{}).Error; err != nil {
@@ -380,7 +374,7 @@ func (usuario) AgregarLecturador(w http.ResponseWriter, r *http.Request) {
 		Usuario:  lecturador.Usuario,
 		Rol:      "lecturador",
 		CodGrupo: nil,
-		CodRuta:  lecturador.CodRuta,
+		CodRuta:  nil,
 		Persona: &models.Persona{
 			Nombre:   lecturador.Nombre,
 			Apellido: lecturador.Apellido,
