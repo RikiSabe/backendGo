@@ -17,7 +17,6 @@ type Lecturacion struct {
 	Fecha         datatypes.Date `json:"fecha"`
 	CreatedAt     time.Time      `gorm:"default:now()"`
 	UpdatedAt     time.Time
-
 	// Relaciones
 	Medidor Medidor `gorm:"foreignKey:CodMedidor"` // Relación con Medidor
 }

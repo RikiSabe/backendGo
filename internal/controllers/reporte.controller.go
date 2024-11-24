@@ -2,12 +2,15 @@ package controllers
 
 import (
 	"backend/internal/db"
+	"time"
 
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/johnfercher/maroto/v2"
+	"github.com/johnfercher/maroto/v2/pkg/components/col"
+	"github.com/johnfercher/maroto/v2/pkg/components/image"
 	"github.com/johnfercher/maroto/v2/pkg/components/list"
 	"github.com/johnfercher/maroto/v2/pkg/components/row"
 	"github.com/johnfercher/maroto/v2/pkg/components/text"
@@ -55,10 +58,56 @@ func (reporte) CriticaPDF(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func getPageHeader() core.Row {
+	return row.New(20).Add(
+		image.NewFromFileCol(22, "internal/images/cosaalt_logo.png", props.Rect{
+			Center:  true,
+			Percent: 80,
+		}),
+	)
+}
+
+func getPageFooter() core.Row {
+	now := time.Now()
+
+	formated := now.Format("02/01/2006 15:04:05")
+
+	return row.New(20).Add(
+		col.New(12).Add(
+			text.New("Generada por Encargado Ricardo Campos", props.Text{
+				Top: 12,
+				// Style: fontstyle.BoldItalic,
+				Size:  8,
+				Align: align.Left,
+				Color: &props.BlackColor,
+			}),
+			text.New("Fecha y hora: "+formated, props.Text{
+				Top: 16,
+				// Style: fontstyle.BoldItalic,
+				Size:  8,
+				Align: align.Left,
+				Color: &props.BlackColor,
+			}),
+		),
+	)
+}
+
 // MakePDFCritica crea un PDF con una lista dinámica.
 func MakePDFCritica() (core.Maroto, error) {
 	mrt := maroto.New()
 	m := maroto.NewMetricsDecorator(mrt)
+
+	err := m.RegisterHeader(getPageHeader())
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	m.RegisterFooter(getPageFooter())
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 
 	// Añadir un título al documento
 	m.AddRows(text.NewRow(20, "Reporte Criticas", props.Text{
@@ -147,6 +196,18 @@ func (reporte) LecturadoresPDF(w http.ResponseWriter, r *http.Request) {
 func MakePDFLecturadores() (core.Maroto, error) {
 	mrt := maroto.New()
 	m := maroto.NewMetricsDecorator(mrt)
+
+	err := m.RegisterHeader(getPageHeader())
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	m.RegisterFooter(getPageFooter())
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 
 	// Añadir un título al documento
 	m.AddRows(text.NewRow(20, "Reporte Lecturadores", props.Text{
@@ -246,6 +307,18 @@ func (reporte) MedidoresPDF(w http.ResponseWriter, r *http.Request) {
 func MakePDFMedidores() (core.Maroto, error) {
 	mrt := maroto.New()
 	m := maroto.NewMetricsDecorator(mrt)
+
+	err := m.RegisterHeader(getPageHeader())
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	m.RegisterFooter(getPageFooter())
+
+	if err != nil {
+		log.Fatal(err.Error())
+	}
 
 	// Añadir un título al documento
 	m.AddRows(text.NewRow(20, "Reporte Medidores", props.Text{

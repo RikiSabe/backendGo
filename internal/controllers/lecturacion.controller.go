@@ -7,8 +7,10 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
+	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -18,10 +20,10 @@ func ObtenerLecturaciones(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(&lecturaciones); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 	}
-	w.WriteHeader(http.StatusOK)
 }
 
 func ObtenerLecturacion(w http.ResponseWriter, r *http.Request) {
@@ -40,19 +42,6 @@ func ObtenerLecturacion(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "", http.StatusInternalServerError)
 		return
 	}
-}
-
-func EliminarLecturacion(w http.ResponseWriter, r *http.Request) {
-	cod := mux.Vars(r)["cod"]
-	if err := services.Lecturacion.Delete(cod); err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			http.Error(w, "", http.StatusNotFound)
-			return
-		}
-		http.Error(w, "", http.StatusInternalServerError)
-		return
-	}
-	w.WriteHeader(http.StatusOK)
 }
 
 func SubirLecturacion(w http.ResponseWriter, r *http.Request) {
@@ -108,4 +97,78 @@ func ModificarLecturacion(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Ha ocurrido un error al codificar a JSON", http.StatusInternalServerError)
 		return
 	}
+}
+
+func CrearLecturacion(w http.ResponseWriter, r *http.Request) {
+	// Estructura para recibir los datos del cuerpo de la solicitud
+	var datosLecturacion struct {
+		NombreMedidor string `json:"nombreMedidor"`
+		Usuario       string `json:"usuario"`
+		Medicion      uint   `json:"medicion"`
+	}
+
+	// Decodificar el JSON recibido
+	if err := json.NewDecoder(r.Body).Decode(&datosLecturacion); err != nil {
+		// log.Println("Error al decodificar el JSON:", err.Error())
+		http.Error(w, "Error al procesar los datos", http.StatusBadRequest)
+		return
+	}
+
+	// Iniciar transacción
+	tx := db.GDB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// Buscar el medidor por nombre
+	var medidor models.Medidor
+	if err := tx.Where("nombre = ?", datosLecturacion.NombreMedidor).First(&medidor).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Medidor no encontrado", http.StatusNotFound)
+			tx.Rollback()
+			return
+		}
+		http.Error(w, "Error al buscar el medidor", http.StatusInternalServerError)
+		tx.Rollback()
+		return
+	}
+
+	// Buscar el usuario por nombre
+	var usuario models.Usuario
+	if err := tx.Where("usuario = ?", datosLecturacion.Usuario).First(&usuario).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			http.Error(w, "Usuario no encontrado", http.StatusNotFound)
+			tx.Rollback()
+			return
+		}
+		http.Error(w, "Error al buscar el usuario", http.StatusInternalServerError)
+		tx.Rollback()
+		return
+	}
+
+	// Crear una nueva lecturación
+	nuevaLecturacion := models.Lecturacion{
+		CodRuta:       *medidor.CodRuta,
+		CodLecturador: usuario.COD,
+		CodMedidor:    medidor.COD,
+		Medicion:      &datosLecturacion.Medicion,
+		Hora:          datatypes.Time(datatypes.NewTime(time.Now().Hour(), time.Now().Minute(), time.Now().Second(), 0)),
+		Fecha:         datatypes.Date(time.Now()),
+	}
+
+	// Guardar la lecturación en la base de datos
+	if err := tx.Create(&nuevaLecturacion).Error; err != nil {
+		http.Error(w, "Error al guardar la lecturación", http.StatusInternalServerError)
+		tx.Rollback()
+		return
+	}
+
+	// Confirmar la transacción
+	tx.Commit()
+
+	// Responder con éxito
+	w.WriteHeader(http.StatusOK)
+	// w.Write([]byte("Lecturación creada exitosamente"))
 }

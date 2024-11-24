@@ -43,17 +43,3 @@ func (m *lecturacion) Save(i *models.Lecturacion) error {
 	tx.Commit()
 	return nil
 }
-
-func (m *lecturacion) Delete(id string) error {
-	var lecturacion models.Lecturacion
-	tx := db.GDB.Begin()
-
-	// Marcar el medidor como inactivo en lugar de eliminarlo físicamente
-	if err := tx.Where("cod = ?", id).Delete(&lecturacion).Error; err != nil {
-		tx.Rollback()
-		return err
-	}
-
-	tx.Commit()
-	return nil
-}
