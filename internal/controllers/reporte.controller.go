@@ -2,12 +2,14 @@ package controllers
 
 import (
 	"backend/internal/db"
+	"strings"
 	"time"
 
 	"log"
 	"net/http"
 	"strconv"
 
+	"github.com/gorilla/mux"
 	"github.com/johnfercher/maroto/v2"
 	"github.com/johnfercher/maroto/v2/pkg/components/col"
 	"github.com/johnfercher/maroto/v2/pkg/components/image"
@@ -18,6 +20,7 @@ import (
 	"github.com/johnfercher/maroto/v2/pkg/consts/fontstyle"
 	"github.com/johnfercher/maroto/v2/pkg/core"
 	"github.com/johnfercher/maroto/v2/pkg/props"
+	"gorm.io/datatypes"
 )
 
 type reporte struct{}
@@ -380,5 +383,123 @@ func (o medidorRuta) GetContent(i int) core.Row {
 		})
 	}
 
+	return r
+}
+
+func (reporte) LecturacionPDF(w http.ResponseWriter, r *http.Request) {
+	// Obtener el codUsuario de los parámetros del URL
+	codUsuario := mux.Vars(r)["codUsuario"]
+
+	// Generar el PDF
+	m, err := MakePDFLecturacion(codUsuario)
+	if err != nil {
+		log.Printf("Error generando PDF: %v", err)
+		http.Error(w, "Error generando PDF", http.StatusInternalServerError)
+		return
+	}
+
+	doc, err := m.Generate()
+	if err != nil {
+		log.Printf("Error generando PDF: %v", err)
+		http.Error(w, "Error generando PDF", http.StatusInternalServerError)
+		return
+	}
+
+	// Configurar los encabezados para la respuesta HTTP
+	w.Header().Set("Content-Type", "application/pdf")
+	w.Header().Set("Content-Disposition", "attachment; filename=\"reporte_lecturacion.pdf\"")
+
+	// Escribir el contenido del buffer en la respuesta
+	if _, err := w.Write(doc.GetBytes()); err != nil {
+		log.Printf("Error escribiendo PDF en la respuesta: %v", err)
+		http.Error(w, "Error escribiendo PDF en la respuesta", http.StatusInternalServerError)
+	}
+}
+
+func MakePDFLecturacion(codUsuario string) (core.Maroto, error) {
+	mrt := maroto.New()
+	m := maroto.NewMetricsDecorator(mrt)
+
+	err := m.RegisterHeader(getPageHeader())
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	m.RegisterFooter(getPageFooter())
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	var nombreUsuario string
+	err = db.GDB.Raw("SELECT usuario FROM usuario WHERE cod = ? limit 1", codUsuario).Scan(&nombreUsuario).Error
+	if err != nil {
+		return nil, err
+	}
+
+	// Añadir un título al documento
+	titulo := "Reporte de lecturaciones del usuario: " + nombreUsuario
+
+	// Añadir un título al documento
+	m.AddRows(text.NewRow(20, titulo, props.Text{
+		Top:   3,
+		Style: fontstyle.Bold,
+		Align: align.Center,
+	}))
+
+	var lista []Lecturacion
+	query := `
+		SELECT l.cod_medidor, m.nombre AS nombre_medidor, l.medicion, l.hora, l.fecha
+		FROM lecturacion l
+		INNER JOIN medidor m ON l.cod_medidor = m.cod
+		WHERE l.cod_lecturador = ?
+		ORDER BY l.fecha, l.hora;
+	`
+
+	if err := db.GDB.Raw(query, codUsuario).Scan(&lista).Error; err != nil {
+		return nil, err
+	}
+
+	// Crear filas dinámicas
+	rows, err := list.Build[Lecturacion](lista)
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	m.AddRows(rows...)
+	return m, nil
+}
+
+type Lecturacion struct {
+	CodMedidor    uint           `json:"codMedidor"`
+	NombreMedidor string         `json:"nombreMedidor"`
+	Medicion      *uint          `json:"medicion"`
+	Hora          datatypes.Time `json:"hora"`
+	Fecha         string         `json:"fecha"`
+}
+
+func (l Lecturacion) GetHeader() core.Row {
+	return row.New(10).Add(
+		text.NewCol(2, "Código Medidor", props.Text{Style: fontstyle.Bold}),
+		text.NewCol(4, "Nombre Medidor", props.Text{Style: fontstyle.Bold}),
+		text.NewCol(2, "Medición", props.Text{Style: fontstyle.Bold}),
+		text.NewCol(2, "Hora", props.Text{Style: fontstyle.Bold}),
+		text.NewCol(2, "Fecha", props.Text{Style: fontstyle.Bold}),
+	)
+}
+
+func (l Lecturacion) GetContent(i int) core.Row {
+	r := row.New(10).Add(
+		text.NewCol(2, strconv.Itoa(int(l.CodMedidor))),
+		text.NewCol(4, l.NombreMedidor),
+		text.NewCol(2, strconv.Itoa(int(*l.Medicion))),
+		text.NewCol(2, l.Hora.String()),                // l.Hora.Format("15:04:05")), // Formato HH:mm:ss
+		text.NewCol(2, strings.Split(l.Fecha, "T")[0]), //l.Fecha.Format("02/01/2006")), // Formato DD/MM/YYYY
+	)
+
+	if i%2 == 0 {
+		r.WithStyle(&props.Cell{
+			BackgroundColor: background,
+		})
+	}
 	return r
 }
