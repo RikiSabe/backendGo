@@ -11,10 +11,8 @@ type ruta struct {
 var Ruta ruta
 
 func (m *ruta) CountActivos(total *int64) error {
-	// Inicia una transacción solo para la consulta
 	tx := db.GDB.Begin()
 
-	// Cuenta los medidores activos
 	if err := tx.Model(&models.Ruta{}).Where("estado = ?", "activo").Count(total).Error; err != nil {
 		tx.Rollback()
 		return err
@@ -25,7 +23,6 @@ func (m *ruta) CountActivos(total *int64) error {
 }
 
 func (m *ruta) GetAll(l *[]models.Ruta) error {
-
 	if err := db.GDB.Find(&l).Error; err != nil {
 		return err
 	}

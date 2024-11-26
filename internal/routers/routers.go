@@ -37,7 +37,6 @@ func endPointsAPI(api *mux.Router) {
 	v1Medidores.HandleFunc("/cantidad-diaria/{cod}", c.CantidadMedidoresbyLecturador).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("", c.ObtenerMedidores).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("/{cod}", c.ObtenerMedidor).Methods(http.MethodGet)
-	// v1Medidores.HandleFunc("", c.PostMedidor).Methods(http.MethodPost)
 	v1Medidores.HandleFunc("", c.AgregarMedidor).Methods(http.MethodPost)
 	v1Medidores.HandleFunc("/{cod}", c.ModificarMedidor).Methods(http.MethodPut)
 	v1Medidores.HandleFunc("/{cod}", c.EliminarMedidor).Methods(http.MethodDelete)
@@ -85,7 +84,7 @@ func endPointsAPI(api *mux.Router) {
 	v1.HandleFunc("/login", c.Auth.AuthLogin).Methods(http.MethodPost)
 	v1.HandleFunc("/loginweb", c.Auth.AuthLoginWeb).Methods(http.MethodPost)
 
-	// Grupos
+	//v1 Grupos
 	v1Grupos.HandleFunc("/cantidades", c.ObtenerDatosGenerales).Methods(http.MethodGet)
 	v1Grupos.HandleFunc("/agregar-grupo/{cod_persona}", c.SubirGrupo).Methods(http.MethodPost)
 	v1Grupos.HandleFunc("/quitar-grupo/{cod_usuario}", c.QuitarCodGrupo).Methods(http.MethodPut)
@@ -97,8 +96,8 @@ func endPointsAPI(api *mux.Router) {
 func endPointsWS(ws *mux.Router) {
 	v1 := ws.PathPrefix("/v1").Subrouter()
 	v1UbicacionLecturador := v1.PathPrefix("/ubicacion-lecturador").Subrouter()
-	// v1 Medidores mobile
+	//v1 Medidores mobile
 	v1UbicacionLecturador.HandleFunc("", c.Monitoreo.ObtenerUbicacionLecturadorWS)
-	//Web
+	//v1 Web
 	v1UbicacionLecturador.HandleFunc("/all", c.Monitoreo.ObtenerUbicacionesLecturadorWS)
 }

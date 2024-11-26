@@ -20,7 +20,7 @@ func ObtenerPersonas(w http.ResponseWriter, r *http.Request) {
 }
 
 func SubirPersonas(w http.ResponseWriter, r *http.Request) {
-	var persona models.Persona // dao.Personas
+	var persona models.Persona
 	err := json.NewDecoder(r.Body).Decode(&persona)
 	if err != nil {
 		http.Error(w, "Error en el parseo de formulario", http.StatusBadRequest)

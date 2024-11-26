@@ -17,9 +17,11 @@ func NewWebSocketManager() *Manager {
 		conns: make(map[*websocket.Conn]bool),
 	}
 }
+
 func NewUpgrader() *websocket.Upgrader {
 	return &websocket.Upgrader{}
 }
+
 func (manager *Manager) AddConn(ws *websocket.Conn) {
 	manager.mu.Lock()
 	defer manager.mu.Unlock()
@@ -57,7 +59,6 @@ func (manager *Manager) Broadcast(message interface{}) {
 	wg.Wait()
 }
 
-// Handler para manejar las conexiones WebSocket
 func WebSocketHandler(manager *Manager, upgrader *websocket.Upgrader) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ws, err := upgrader.Upgrade(w, r, nil)

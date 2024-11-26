@@ -33,12 +33,12 @@ var (
 	managerAdminWS          = NewWebSocketManager()
 	mu                      sync.Mutex
 	channelUbicacionesUsers = make(chan map[string]Ubicacion, 10)
-	ubicacionesUsers        = make(map[string]Ubicacion) // Cambiado a un mapa
+	ubicacionesUsers        = make(map[string]Ubicacion)
 )
 
 var upgrader = websocket.Upgrader{
 	CheckOrigin: func(r *http.Request) bool {
-		// Permitir todas las solicitudes, aunque deberías personalizarlo según tus necesidades.
+		// Permitir todas las solicitudes
 		return true
 	},
 }
@@ -52,21 +52,18 @@ func (monitoreo) ObtenerUbicacionesLecturadorWS(w http.ResponseWriter, r *http.R
 	}
 	defer func() {
 		log.Println("Cerrando conexión WebSocket")
-		ws.Close() // Asegura que la conexión se cierra
+		ws.Close()
 	}()
 
-	// Añadir conexión al manager
 	managerAdminWS.AddConn(ws)
 
-	// Configurar un manejador de cierre
 	ws.SetCloseHandler(func(code int, text string) error {
 		log.Println("La conexión WebSocket se ha cerrado:", text)
-		managerAdminWS.RemoveConn(ws) // Remover la conexión del manager al cerrar
+		managerAdminWS.RemoveConn(ws)
 		return nil
 	})
 
-	// Configurar ticker para enviar pings periódicos
-	pingTicker := time.NewTicker(30 * time.Second) // Ajusta el intervalo de pings según sea necesario
+	pingTicker := time.NewTicker(30 * time.Second)
 	defer pingTicker.Stop()
 
 	managerAdminWS.Broadcast(ubicacionesUsers)
@@ -74,70 +71,21 @@ func (monitoreo) ObtenerUbicacionesLecturadorWS(w http.ResponseWriter, r *http.R
 	for {
 		select {
 		case ch := <-channelUbicacionesUsers:
-			// Transmitir la ubicación al cliente
 			log.Println(ch)
 			managerAdminWS.Broadcast(ch)
 
 		case <-pingTicker.C:
-			// Enviar un ping para mantener la conexión viva
 			if err := ws.WriteMessage(websocket.PingMessage, nil); err != nil {
 				log.Println("Error al enviar mensaje de ping:", err)
-				return // Cierra la conexión en caso de error
+				return
 			}
 
 		default:
-			// Introduce una pequeña pausa para evitar un bucle ocupado (busy loop)
-			time.Sleep(100 * time.Millisecond) // Ajusta este valor según las necesidades de rendimiento
+			time.Sleep(100 * time.Millisecond)
 		}
 	}
 }
 
-// Para Web
-// func (monitoreo) ObtenerUbicacionesLecturadorWS(w http.ResponseWriter, r *http.Request) {
-// 	var upgrader = websocket.Upgrader{
-// 		CheckOrigin: func(r *http.Request) bool {
-// 			// Aquí puedes permitir todas las solicitudes, aunque deberías personalizarlo según tus necesidades.
-// 			return true
-// 		},
-// 	}
-// 	// Establecer la conexión WebSocket
-// 	ws, err := upgrader.Upgrade(w, r, nil)
-// 	if err != nil {
-// 		log.Println("Error al hacer upgrade a WebSocket:", err)
-// 		return
-// 	}
-// 	defer func() {
-// 		log.Println("Cerrando conexión WebSocket")
-// 		ws.Close() // Asegura que la conexión se cierra
-// 	}()
-
-// 	managerAdminWS.AddConn(ws)
-
-// 	// Configurar un manejador de cierre
-// 	ws.SetCloseHandler(func(code int, text string) error {
-// 		log.Println("La conexión WebSocket se ha cerrado:", text)
-// 		managerAdminWS.RemoveConn(ws) // Opcional: remueve la conexión del manager
-// 		return nil
-// 	})
-
-// 	for {
-// 		select {
-// 		case ch := <-channelUbicacionesUsers:
-// 			// Transmitir la ubicación al cliente
-// 			log.Println(ch)
-// 			managerAdminWS.Broadcast(ch)
-
-// 		default:
-// 			// Verifica si hay errores en la conexión
-// 			if err := ws.WriteMessage(websocket.PingMessage, nil); err != nil {
-// 				log.Println("Error al enviar mensaje de ping:", err)
-// 				return // Cierra la conexión en caso de error
-// 			}
-// 		}
-// 	}
-// }
-
-// ObtenerUbicacionLecturadorWS permite al usuario conectarse para enviar ubicación
 func (monitoreo) ObtenerUbicacionLecturadorWS(w http.ResponseWriter, r *http.Request) {
 	tokenAuth := r.Header.Get("Authorization")
 	log.Println("token:", tokenAuth)
@@ -145,7 +93,6 @@ func (monitoreo) ObtenerUbicacionLecturadorWS(w http.ResponseWriter, r *http.Req
 	var location Ubicacion
 	var upgrader = websocket.Upgrader{}
 
-	// Establecer la conexión WebSocket
 	ws, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Println("Error al hacer upgrade a WebSocket:", err)
@@ -153,7 +100,6 @@ func (monitoreo) ObtenerUbicacionLecturadorWS(w http.ResponseWriter, r *http.Req
 	}
 	defer ws.Close()
 
-	// Verificar el header de autorización
 	token, err := verificarBearerHeader(tokenAuth)
 	if err != nil {
 		log.Println("Encabezado de autorización inválido:", err)
@@ -179,7 +125,6 @@ func (monitoreo) ObtenerUbicacionLecturadorWS(w http.ResponseWriter, r *http.Req
 	}
 	log.Println(username)
 
-	// Agregar conexión al manager
 	mu.Lock()
 	managerUbicacionesWS.AddConn(ws)
 	mu.Unlock()

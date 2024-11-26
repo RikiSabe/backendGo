@@ -65,7 +65,6 @@ func ModificarLecturacion(w http.ResponseWriter, r *http.Request) {
 	var lecturacionActualizada models.Lecturacion
 	cod := mux.Vars(r)["cod"]
 
-	// Buscar la lecturación existente por su código
 	var lecturacionExistente models.Lecturacion
 	if err := services.Lecturacion.GetById(&lecturacionExistente, cod); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -76,17 +75,14 @@ func ModificarLecturacion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Decodificar el JSON recibido en el request
 	if err := json.NewDecoder(r.Body).Decode(&lecturacionActualizada); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	// Actualizar los campos de la lecturación existente con los valores de la lecturación actualizada
 	lecturacionExistente.Fecha = lecturacionActualizada.Fecha
 	lecturacionExistente.NroRegistro = lecturacionActualizada.NroRegistro
 
-	// Guardar los cambios en la lecturación existente
 	if err := db.GDB.Save(&lecturacionExistente).Error; err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
@@ -100,21 +96,17 @@ func ModificarLecturacion(w http.ResponseWriter, r *http.Request) {
 }
 
 func CrearLecturacion(w http.ResponseWriter, r *http.Request) {
-	// Estructura para recibir los datos del cuerpo de la solicitud
 	var datosLecturacion struct {
 		NombreMedidor string `json:"nombreMedidor"`
 		Usuario       string `json:"usuario"`
 		Medicion      uint   `json:"medicion"`
 	}
 
-	// Decodificar el JSON recibido
 	if err := json.NewDecoder(r.Body).Decode(&datosLecturacion); err != nil {
-		// log.Println("Error al decodificar el JSON:", err.Error())
 		http.Error(w, "Error al procesar los datos", http.StatusBadRequest)
 		return
 	}
 
-	// Iniciar transacción
 	tx := db.GDB.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -122,7 +114,6 @@ func CrearLecturacion(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// Buscar el medidor por nombre
 	var medidor models.Medidor
 	if err := tx.Where("nombre = ?", datosLecturacion.NombreMedidor).First(&medidor).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -135,7 +126,6 @@ func CrearLecturacion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Buscar el usuario por nombre
 	var usuario models.Usuario
 	if err := tx.Where("usuario = ?", datosLecturacion.Usuario).First(&usuario).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -148,7 +138,6 @@ func CrearLecturacion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Crear una nueva lecturación
 	nuevaLecturacion := models.Lecturacion{
 		CodRuta:       *medidor.CodRuta,
 		CodLecturador: usuario.COD,
@@ -158,17 +147,13 @@ func CrearLecturacion(w http.ResponseWriter, r *http.Request) {
 		Fecha:         datatypes.Date(time.Now()),
 	}
 
-	// Guardar la lecturación en la base de datos
 	if err := tx.Create(&nuevaLecturacion).Error; err != nil {
 		http.Error(w, "Error al guardar la lecturación", http.StatusInternalServerError)
 		tx.Rollback()
 		return
 	}
 
-	// Confirmar la transacción
 	tx.Commit()
 
-	// Responder con éxito
 	w.WriteHeader(http.StatusOK)
-	// w.Write([]byte("Lecturación creada exitosamente"))
 }

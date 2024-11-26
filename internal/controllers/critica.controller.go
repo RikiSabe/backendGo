@@ -81,7 +81,6 @@ func ModificarCritica(w http.ResponseWriter, r *http.Request) {
 	var criticaActualizada models.Critica
 	cod := mux.Vars(r)["cod"]
 
-	// Buscar la lecturación existente por su código
 	var criticaExistente models.Critica
 	if err := services.Critica.GetById(&criticaExistente, cod); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -92,20 +91,15 @@ func ModificarCritica(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Decodificar el JSON recibido en el request
 	if err := json.NewDecoder(r.Body).Decode(&criticaActualizada); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	// Actualizar los campos de la lecturación existente con los valores de la lecturación actualizada
-	// lecturacionExistente.Fecha = lecturacionActualizada.Fecha
-	// lecturacionExistente.NroRegistro = lecturacionActualizada.NroRegistro
-	// (Actualizar otros campos según sea necesario)
 	criticaExistente.Descripcion = criticaActualizada.Descripcion
 	criticaExistente.Tipo = criticaActualizada.Tipo
 	criticaExistente.Estado = criticaActualizada.Estado
-	// Guardar los cambios en la lecturación existente
+
 	if err := db.GDB.Save(&criticaExistente).Error; err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

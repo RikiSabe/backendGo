@@ -8,18 +8,17 @@ type Usuario struct {
 	Usuario string `json:"usuario"`
 	Contra  string `json:"contra"`
 	Estado  string `json:"estado"`
-	// Claves foráneas
+
 	CodRuta       *uint         `json:"-"`
 	CodPersona    uint          `json:"-"`
 	Persona       *Persona      `gorm:"foreignKey:CodPersona"`
 	CodGrupo      *uint         `json:"-"`
-	Lecturaciones []Lecturacion `gorm:"foreignKey:CodLecturador"`
+	Lecturaciones []Lecturacion `gorm:"foreignKey:CodLecturador" json:"lecturaciones,omitempty"`
 
 	CreatedAt time.Time `gorm:"default:now()"`
 	UpdatedAt time.Time
 }
 
-// Implementación de la interfaz TablerUsuario
 func (Usuario) TableName() string {
 	return "usuario"
 }

@@ -101,7 +101,6 @@ func ModificarRuta(w http.ResponseWriter, r *http.Request) {
 	var rutaActualizada models.Ruta
 	cod := mux.Vars(r)["cod"]
 
-	// Buscar la lecturación existente por su código
 	var rutaExistente models.Ruta
 	if err := services.Ruta.GetById(&rutaExistente, cod); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -112,7 +111,6 @@ func ModificarRuta(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Decodificar el JSON recibido en el request
 	if err := json.NewDecoder(r.Body).Decode(&rutaActualizada); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
@@ -121,7 +119,7 @@ func ModificarRuta(w http.ResponseWriter, r *http.Request) {
 	rutaExistente.Nombre = rutaActualizada.Nombre
 	rutaExistente.Zona = rutaActualizada.Zona
 	rutaExistente.Estado = rutaActualizada.Estado
-	// Guardar los cambios en la lecturación existente
+
 	if err := db.GDB.Save(&rutaExistente).Error; err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		return

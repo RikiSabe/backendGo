@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"backend/internal/db"
+	"fmt"
 	"strings"
 	"time"
 
@@ -33,8 +34,6 @@ var background = &props.Color{
 	Blue:  200,
 }
 
-// CriticaPDF
-
 func (reporte) CriticaPDF(w http.ResponseWriter, r *http.Request) {
 	m, err := MakePDFCritica()
 	if err != nil {
@@ -42,7 +41,7 @@ func (reporte) CriticaPDF(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error generando PDF", http.StatusInternalServerError)
 		return
 	}
-	// Generar el PDF en el buffer
+
 	doc, err := m.Generate()
 	if err != nil {
 		log.Printf("Error generando PDF: %v", err)
@@ -50,11 +49,9 @@ func (reporte) CriticaPDF(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Configurar los encabezados para la respuesta HTTP
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", "attachment; filename=\"reporte_critica.pdf\"")
 
-	// Escribir el contenido del buffer en la respuesta
 	if _, err := w.Write(doc.GetBytes()); err != nil {
 		log.Printf("Error escribiendo PDF en la respuesta: %v", err)
 		http.Error(w, "Error escribiendo PDF en la respuesta", http.StatusInternalServerError)
@@ -78,15 +75,13 @@ func getPageFooter() core.Row {
 	return row.New(20).Add(
 		col.New(12).Add(
 			text.New("Generada por Encargado Ricardo Campos", props.Text{
-				Top: 12,
-				// Style: fontstyle.BoldItalic,
+				Top:   12,
 				Size:  8,
 				Align: align.Left,
 				Color: &props.BlackColor,
 			}),
 			text.New("Fecha y hora: "+formated, props.Text{
-				Top: 16,
-				// Style: fontstyle.BoldItalic,
+				Top:   16,
 				Size:  8,
 				Align: align.Left,
 				Color: &props.BlackColor,
@@ -95,7 +90,6 @@ func getPageFooter() core.Row {
 	)
 }
 
-// MakePDFCritica crea un PDF con una lista dinámica.
 func MakePDFCritica() (core.Maroto, error) {
 	mrt := maroto.New()
 	m := maroto.NewMetricsDecorator(mrt)
@@ -112,7 +106,6 @@ func MakePDFCritica() (core.Maroto, error) {
 		log.Fatal(err.Error())
 	}
 
-	// Añadir un título al documento
 	m.AddRows(text.NewRow(20, "Reporte Criticas", props.Text{
 		Top:   3,
 		Style: fontstyle.Bold,
@@ -168,8 +161,6 @@ func (o critica) GetContent(i int) core.Row {
 	return r
 }
 
-// Lecturadores
-
 func (reporte) LecturadoresPDF(w http.ResponseWriter, r *http.Request) {
 	m, err := MakePDFLecturadores()
 	if err != nil {
@@ -177,7 +168,7 @@ func (reporte) LecturadoresPDF(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error generando PDF", http.StatusInternalServerError)
 		return
 	}
-	// Generar el PDF en el buffer
+
 	doc, err := m.Generate()
 	if err != nil {
 		log.Printf("Error generando PDF: %v", err)
@@ -185,11 +176,9 @@ func (reporte) LecturadoresPDF(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Configurar los encabezados para la respuesta HTTP
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", "attachment; filename=\"reporte_lecturadores.pdf\"")
 
-	// Escribir el contenido del buffer en la respuesta
 	if _, err := w.Write(doc.GetBytes()); err != nil {
 		log.Printf("Error escribiendo PDF en la respuesta: %v", err)
 		http.Error(w, "Error escribiendo PDF en la respuesta", http.StatusInternalServerError)
@@ -212,7 +201,6 @@ func MakePDFLecturadores() (core.Maroto, error) {
 		log.Fatal(err.Error())
 	}
 
-	// Añadir un título al documento
 	m.AddRows(text.NewRow(20, "Reporte Lecturadores", props.Text{
 		Top:   3,
 		Style: fontstyle.Bold,
@@ -239,7 +227,6 @@ func MakePDFLecturadores() (core.Maroto, error) {
 	return m, nil
 }
 
-// Estructura para lecturadores
 type lecturador struct {
 	COD      uint   `gorm:"primaryKey;AutoIncrement" json:"cod"`
 	Usuario  string `json:"usuario"`
@@ -261,7 +248,7 @@ func (o lecturador) GetHeader() core.Row {
 
 func (o lecturador) GetContent(i int) core.Row {
 	r := row.New(6).Add(
-		text.NewCol(1, strconv.Itoa(i+1)), // Agregar el índice (N°)
+		text.NewCol(1, strconv.Itoa(i+1)),
 		text.NewCol(2, strconv.FormatUint(uint64(o.COD), 10)),
 		text.NewCol(2, o.Usuario),
 		text.NewCol(2, o.Nombre),
@@ -269,7 +256,6 @@ func (o lecturador) GetContent(i int) core.Row {
 		text.NewCol(2, o.CI),
 	)
 
-	// Alternar el color de fondo para filas pares
 	if i%2 == 0 {
 		r.WithStyle(&props.Cell{
 			BackgroundColor: background,
@@ -279,8 +265,6 @@ func (o lecturador) GetContent(i int) core.Row {
 	return r
 }
 
-// Medidores PDF
-
 func (reporte) MedidoresPDF(w http.ResponseWriter, r *http.Request) {
 	m, err := MakePDFMedidores()
 	if err != nil {
@@ -288,7 +272,7 @@ func (reporte) MedidoresPDF(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error generando PDF", http.StatusInternalServerError)
 		return
 	}
-	// Generar el PDF en el buffer
+
 	doc, err := m.Generate()
 	if err != nil {
 		log.Printf("Error generando PDF: %v", err)
@@ -296,11 +280,9 @@ func (reporte) MedidoresPDF(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Configurar los encabezados para la respuesta HTTP
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", "attachment; filename=\"reporte_medidores.pdf\"")
 
-	// Escribir el contenido del buffer en la respuesta
 	if _, err := w.Write(doc.GetBytes()); err != nil {
 		log.Printf("Error escribiendo PDF en la respuesta: %v", err)
 		http.Error(w, "Error escribiendo PDF en la respuesta", http.StatusInternalServerError)
@@ -323,7 +305,6 @@ func MakePDFMedidores() (core.Maroto, error) {
 		log.Fatal(err.Error())
 	}
 
-	// Añadir un título al documento
 	m.AddRows(text.NewRow(20, "Reporte Medidores", props.Text{
 		Top:   3,
 		Style: fontstyle.Bold,
@@ -349,7 +330,6 @@ func MakePDFMedidores() (core.Maroto, error) {
 	return m, nil
 }
 
-// Estructura para los datos combinados de Medidor y Ruta
 type medidorRuta struct {
 	MedidorNombre string `json:"medidor_nombre"`
 	Propietario   string `json:"propietario"`
@@ -369,14 +349,13 @@ func (o medidorRuta) GetHeader() core.Row {
 
 func (o medidorRuta) GetContent(i int) core.Row {
 	r := row.New(6).Add(
-		text.NewCol(1, strconv.Itoa(i+1)), // Agregar el índice (N°)
+		text.NewCol(1, strconv.Itoa(i+1)),
 		text.NewCol(3, o.MedidorNombre),
 		text.NewCol(3, o.Propietario),
 		text.NewCol(2, o.RutaNombre),
 		text.NewCol(2, o.Zona),
 	)
 
-	// Alternar el color de fondo para filas pares
 	if i%2 == 0 {
 		r.WithStyle(&props.Cell{
 			BackgroundColor: background,
@@ -387,10 +366,8 @@ func (o medidorRuta) GetContent(i int) core.Row {
 }
 
 func (reporte) LecturacionPDF(w http.ResponseWriter, r *http.Request) {
-	// Obtener el codUsuario de los parámetros del URL
 	codUsuario := mux.Vars(r)["codUsuario"]
 
-	// Generar el PDF
 	m, err := MakePDFLecturacion(codUsuario)
 	if err != nil {
 		log.Printf("Error generando PDF: %v", err)
@@ -405,11 +382,9 @@ func (reporte) LecturacionPDF(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Configurar los encabezados para la respuesta HTTP
 	w.Header().Set("Content-Type", "application/pdf")
 	w.Header().Set("Content-Disposition", "attachment; filename=\"reporte_lecturacion.pdf\"")
 
-	// Escribir el contenido del buffer en la respuesta
 	if _, err := w.Write(doc.GetBytes()); err != nil {
 		log.Printf("Error escribiendo PDF en la respuesta: %v", err)
 		http.Error(w, "Error escribiendo PDF en la respuesta", http.StatusInternalServerError)
@@ -436,10 +411,8 @@ func MakePDFLecturacion(codUsuario string) (core.Maroto, error) {
 		return nil, err
 	}
 
-	// Añadir un título al documento
 	titulo := "Reporte de lecturaciones del usuario: " + nombreUsuario
 
-	// Añadir un título al documento
 	m.AddRows(text.NewRow(20, titulo, props.Text{
 		Top:   3,
 		Style: fontstyle.Bold,
@@ -459,7 +432,10 @@ func MakePDFLecturacion(codUsuario string) (core.Maroto, error) {
 		return nil, err
 	}
 
-	// Crear filas dinámicas
+	if len(lista) == 0 {
+		return nil, fmt.Errorf("no se encontraron lecturaciones para el usuario con código %s", codUsuario)
+	}
+
 	rows, err := list.Build[Lecturacion](lista)
 	if err != nil {
 		log.Fatal(err.Error())
@@ -492,8 +468,8 @@ func (l Lecturacion) GetContent(i int) core.Row {
 		text.NewCol(2, strconv.Itoa(int(l.CodMedidor))),
 		text.NewCol(4, l.NombreMedidor),
 		text.NewCol(2, strconv.Itoa(int(*l.Medicion))),
-		text.NewCol(2, l.Hora.String()),                // l.Hora.Format("15:04:05")), // Formato HH:mm:ss
-		text.NewCol(2, strings.Split(l.Fecha, "T")[0]), //l.Fecha.Format("02/01/2006")), // Formato DD/MM/YYYY
+		text.NewCol(2, l.Hora.String()),
+		text.NewCol(2, strings.Split(l.Fecha, "T")[0]),
 	)
 
 	if i%2 == 0 {

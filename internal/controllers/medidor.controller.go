@@ -49,7 +49,6 @@ func CantidadMedidoresbyLecturador(w http.ResponseWriter, r *http.Request) {
 func ObtenerMedidores(w http.ResponseWriter, r *http.Request) {
 	var medidores []models.Medidor
 
-	// Llamar al servicio para obtener todos los medidores activos
 	if err := services.Medidor.GetAll(&medidores); err != nil {
 		http.Error(w, "Ha ocurrido un error al obtener la lista de medidores", http.StatusInternalServerError)
 		return
@@ -75,20 +74,16 @@ func ObtenerMedidoresByRuta(w http.ResponseWriter, r *http.Request) {
 		Longitud    float32 `json:"longitud,omitempty"`
 	}
 
-	// Obtén el código de la ruta desde la URL
 	codigoRuta := mux.Vars(r)["cod_ruta"]
 
-	// Consulta SQL personalizada para obtener los medidores con sus coordenadas
 	query := `SELECT m.cod as cod_medidor, m.estado, m.nombre, m.propietario, m.cod_ruta, 
 			  d.longitud, d.latitud
 			  FROM medidor m
 			  LEFT JOIN direccion d ON m.cod_direccion = d.cod
 			  WHERE m.cod_ruta = ? AND m.estado = 'activo';`
 
-	// Inicia la transacción
 	tx := db.GDB.Begin()
 	if err := tx.Raw(query, codigoRuta).Scan(&medidores).Error; err != nil {
-		// Manejo de errores
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			w.WriteHeader(http.StatusNotFound)
 			return
@@ -98,7 +93,6 @@ func ObtenerMedidoresByRuta(w http.ResponseWriter, r *http.Request) {
 	}
 	tx.Commit()
 
-	// Respuesta con los datos de medidores
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(&medidores); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -118,8 +112,7 @@ func ObtenerDireccion(w http.ResponseWriter, r *http.Request) {
 		select d.longitud, d.latitud 
 		FROM direccion as d
 		left join medidor m ON m.cod_direccion = d.cod 
-		where d.cod = ?
-`
+		where d.cod = ?`
 
 	tx := db.GDB.Begin()
 	if err := tx.Raw(query, codDireccion).Scan(&direccion).Error; err != nil {
@@ -174,7 +167,6 @@ func ObtenerMedidor(w http.ResponseWriter, r *http.Request) {
 	var medidor models.Medidor
 	codigoMedidor := mux.Vars(r)["cod"]
 
-	// Llamar al servicio para obtener un medidor por su código
 	if err := services.Medidor.GetByCod(&medidor, codigoMedidor); err != nil {
 		http.Error(w, "Medidor no encontrado", http.StatusNotFound)
 		return
@@ -197,14 +189,12 @@ func AgregarMedidor(w http.ResponseWriter, r *http.Request) {
 		Longitud    float64 `json:"longitud"`
 	}
 
-	// Decodificar el cuerpo de la solicitud
 	if err := json.NewDecoder(r.Body).Decode(&datoMedidor); err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Error al decodificar la solicitud", http.StatusBadRequest)
 		return
 	}
 
-	// Iniciar la transacción
 	tx := db.GDB.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -212,7 +202,6 @@ func AgregarMedidor(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// Verificar la existencia de la ruta
 	if err := tx.Model(models.Ruta{}).Where("cod = ?", datoMedidor.CodRuta).First(&models.Ruta{}).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			http.Error(w, "Ruta no encontrada", http.StatusNotFound)
@@ -224,48 +213,40 @@ func AgregarMedidor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Crear el registro de la dirección
 	direccion := models.Direccion{
 		Latitud:  datoMedidor.Latitud,
 		Longitud: datoMedidor.Longitud,
 	}
 
-	// Guardar la dirección en la base de datos
 	if err := tx.Create(&direccion).Error; err != nil {
 		tx.Rollback()
 		http.Error(w, "Error al registrar la dirección", http.StatusInternalServerError)
 		return
 	}
 
-	// Crear el objeto Medidor
 	medidor := models.Medidor{
 		Nombre:       datoMedidor.Nombre,
 		Propietario:  datoMedidor.Propietario,
 		Tipo:         datoMedidor.Tipo,
-		Estado:       "activo", // Estado inicial del medidor
+		Estado:       "activo",
 		CodRuta:      &datoMedidor.CodRuta,
 		CodDireccion: &direccion.COD,
 	}
 
-	// Guardar el medidor en la base de datos
 	if err := tx.Create(&medidor).Error; err != nil {
 		tx.Rollback()
 		http.Error(w, "Error al registrar el medidor", http.StatusInternalServerError)
 		return
 	}
 
-	// Confirmar la transacción
 	tx.Commit()
 
-	// Responder con éxito
 	w.WriteHeader(http.StatusOK)
-	// w.Write([]byte("Medidor agregado correctamente"))
 }
 
 func PostMedidor(w http.ResponseWriter, r *http.Request) {
 	var medidor models.Medidor
 
-	// Decodificar el JSON recibido en el request
 	log.Println(r.Body)
 	if err := json.NewDecoder(r.Body).Decode(&medidor); err != nil {
 		log.Println(err)
@@ -273,13 +254,11 @@ func PostMedidor(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	medidor.Estado = "activo"
-	// Llamar al servicio para guardar el nuevo medidor
 	if err := services.Medidor.Save(&medidor); err != nil {
 		http.Error(w, "Ha ocurrido un error al registrar el medidor", http.StatusInternalServerError)
 		return
 	}
 
-	// Obtener la lista actualizada de medidores
 	var medidores []models.Medidor
 	if err := services.Medidor.GetAll(&medidores); err != nil {
 		http.Error(w, "Ha ocurrido un error al obtener la lista de medidores", http.StatusInternalServerError)
@@ -296,7 +275,6 @@ func PostMedidor(w http.ResponseWriter, r *http.Request) {
 func EliminarMedidor(w http.ResponseWriter, r *http.Request) {
 	codigoMedidor := mux.Vars(r)["cod"]
 
-	// Llamar al servicio para marcar el medidor como inactivo
 	if err := services.Medidor.Delete(codigoMedidor); err != nil {
 		http.Error(w, "Ha ocurrido un error al eliminar el medidor", http.StatusInternalServerError)
 		return
@@ -309,27 +287,23 @@ func ModificarMedidor(w http.ResponseWriter, r *http.Request) {
 	var medidorActualizado models.Medidor
 	codigoMedidor := mux.Vars(r)["cod"]
 
-	// Buscar el medidor existente por su código
 	var medidorExistente models.Medidor
 	if err := services.Medidor.GetByCod(&medidorExistente, codigoMedidor); err != nil {
 		http.Error(w, "Medidor no encontrado", http.StatusNotFound)
 		return
 	}
 
-	// Decodificar el JSON recibido en el request
 	if err := json.NewDecoder(r.Body).Decode(&medidorActualizado); err != nil {
 		http.Error(w, "Error al decodificar JSON", http.StatusBadRequest)
 		return
 	}
 
-	// Actualizar los campos del medidor existente con los valores del medidor actualizado
 	medidorExistente.Nombre = medidorActualizado.Nombre
 	medidorExistente.Propietario = medidorActualizado.Propietario
 	medidorExistente.CodRuta = medidorActualizado.CodRuta
 	medidorExistente.Estado = medidorActualizado.Estado
 	medidorExistente.Tipo = medidorActualizado.Tipo
 
-	// Guardar los cambios en el medidor existente
 	if err := db.GDB.Save(&medidorExistente).Error; err != nil {
 		http.Error(w, "Ha ocurrido un error al actualizar el medidor", http.StatusInternalServerError)
 		return
@@ -346,24 +320,20 @@ func ModificarDireccion(w http.ResponseWriter, r *http.Request) {
 	var direccionActualizada models.Direccion
 	codigoDireccion := mux.Vars(r)["cod_direccion"]
 
-	// Buscar la dirección existente por su código
 	var direccionExistente models.Direccion
 	if err := services.Direccion.GetByCod(&direccionExistente, codigoDireccion); err != nil {
 		http.Error(w, "Dirección no encontrada", http.StatusNotFound)
 		return
 	}
 
-	// Decodificar el JSON recibido en el request
 	if err := json.NewDecoder(r.Body).Decode(&direccionActualizada); err != nil {
 		http.Error(w, "Error al decodificar JSON", http.StatusBadRequest)
 		return
 	}
 
-	// Actualizar los campos de la dirección existente con los valores de la dirección actualizada
 	direccionExistente.Longitud = direccionActualizada.Longitud
 	direccionExistente.Latitud = direccionActualizada.Latitud
 
-	// Guardar los cambios en la dirección existente
 	if err := db.GDB.Save(&direccionExistente).Error; err != nil {
 		http.Error(w, "Ha ocurrido un error al actualizar la dirección", http.StatusInternalServerError)
 		return

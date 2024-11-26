@@ -1,5 +1,7 @@
 package models
 
+import "time"
+
 type Tabler interface {
 	TableName() string
 }
@@ -9,7 +11,9 @@ type Ruta struct {
 	Zona   string `json:"zona"`
 	Nombre string `json:"nombre"`
 	Estado string `json:"estado"`
-	// Relación
+
+	CreatedAt time.Time `gorm:"default:now()"`
+	UpdatedAt time.Time
 }
 
 // Implementación de la interfaz TablerRuta

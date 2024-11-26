@@ -91,16 +91,6 @@ func (usuario) ObtenerLecturadoresLibres(w http.ResponseWriter, r *http.Request)
 	}
 }
 
-// func (usuario) ObtenerEncargado(w http.ResponseWriter, r *http.Request){
-// 	var encargado struct {
-// 		NombreCompleto string `json:"nombreCompleto"`
-// 		Usuario string `json:"usuario"`
-// 		CI string `json:"ci"`
-// 	}
-// 	codEncargado := mux.Vars(r)["cod"]
-
-// }
-
 func (usuario) ObtenerDatosAdmin(w http.ResponseWriter, r *http.Request) {
 	var admin struct {
 		Nombre   string `json:"nombre"`
@@ -121,7 +111,6 @@ func (usuario) ObtenerDatosAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Retrieve 'cod' claim
 	claims, ok := jwtToken.Claims.(jwt.MapClaims)
 	if !ok {
 		http.Error(w, "Failed to retrieve claims from token", http.StatusInternalServerError)
@@ -130,12 +119,7 @@ func (usuario) ObtenerDatosAdmin(w http.ResponseWriter, r *http.Request) {
 
 	codUsuario, _ := claims["cod"]
 	log.Println(codUsuario)
-	// if !ok {
-	// 	http.Error(w, "Invalid user code in token claims", http.StatusBadRequest)
-	// 	return
-	// }
 
-	// Query for admin data
 	query := `SELECT p.nombre, p.apellido, p.ci, u.usuario 
               FROM persona p
               LEFT JOIN usuario u ON u.cod_persona = p.cod
@@ -150,7 +134,6 @@ func (usuario) ObtenerDatosAdmin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Respond with admin data as JSON
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(&admin); err != nil {
 		http.Error(w, "Failed to encode response", http.StatusInternalServerError)
@@ -165,10 +148,8 @@ func (usuario) ObtenerLecturadorPorCodPersona(w http.ResponseWriter, r *http.Req
 		Usuario  string `json:"usuario"`
 	}
 
-	// Obtiene el codPersona desde la URL
 	codPersona := mux.Vars(r)["cod"]
 
-	// Ajusta la consulta SQL para obtener también el usuario
 	query := `select p.cod as cod_persona, p.nombre, p.apellido, p.ci as ci, u.usuario 
 			  from persona p
 			  left join usuario u on u.cod_persona = p.cod
@@ -204,7 +185,6 @@ func (usuario) ObtenerLecturadorPorUsuario(w http.ResponseWriter, r *http.Reques
 		NombreRuta string `json:"nombreRuta,omitempty"`
 	}
 
-	// Obtiene el nombre de usuario desde la URL
 	nombreUsuario := mux.Vars(r)["usuario"]
 
 	query := `SELECT 
@@ -256,7 +236,6 @@ func (usuario) RestablecerContra(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// Buscar usuario por código
 	if err := tx.Where("cod = ?", cod).First(&lecturador).Error; err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			http.Error(w, "Usuario no encontrado", http.StatusNotFound)
@@ -266,7 +245,6 @@ func (usuario) RestablecerContra(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Generar nueva contraseña
 	newPassword, err := password.Generate(6, 2, 0, false, false)
 	if err != nil {
 		http.Error(w, "Error al generar la contraseña", http.StatusInternalServerError)
@@ -281,7 +259,6 @@ func (usuario) RestablecerContra(w http.ResponseWriter, r *http.Request) {
 	}
 	lecturador.Contra = string(hashedPassword)
 
-	// Guardar el cambio en la base de datos
 	if err := tx.Save(&lecturador).Error; err != nil {
 		tx.Rollback()
 		http.Error(w, "Error al guardar la nueva contraseña", http.StatusInternalServerError)
@@ -290,13 +267,13 @@ func (usuario) RestablecerContra(w http.ResponseWriter, r *http.Request) {
 
 	tx.Commit()
 
-	// Enviar la nueva contraseña al cliente (Por ejemplo, enviarla al correo electrónico)
 	w.WriteHeader(http.StatusOK)
 	if _, err := w.Write([]byte(newPassword)); err != nil {
 		http.Error(w, "Error al enviar la contraseña", http.StatusInternalServerError)
 		return
 	}
 }
+
 func (usuario) ModificarDatosLecturador(w http.ResponseWriter, r *http.Request) {
 	cod := mux.Vars(r)["cod_lecturador"]
 	var personaLecturador struct {
@@ -333,13 +310,11 @@ func (usuario) AgregarLecturador(w http.ResponseWriter, r *http.Request) {
 		CodGrupo uint   `json:"codGrupo"`
 	}
 
-	// Decodificar el cuerpo de la solicitud
 	if err := json.NewDecoder(r.Body).Decode(&lecturador); err != nil {
 		http.Error(w, "Error al decodificar la solicitud", http.StatusBadRequest)
 		return
 	}
 
-	// Iniciar la transacción
 	tx := db.GDB.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -347,29 +322,6 @@ func (usuario) AgregarLecturador(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
-	// Verificar la existencia de la ruta
-	// if err := tx.Model(models.Ruta{}).Where("cod = ?", lecturador.CodRuta).First(&models.Ruta{}).Error; err != nil {
-	// 	if errors.Is(err, gorm.ErrRecordNotFound) {
-	// 		http.Error(w, "Ruta no encontrada", http.StatusNotFound)
-	// 		return
-	// 	}
-	// 	tx.Rollback()
-	// 	http.Error(w, "Error al verificar la ruta", http.StatusInternalServerError)
-	// 	return
-	// }
-
-	// Verificar la existencia del grupo
-	// if err := tx.Model(models.Grupo{}).Where("cod = ?", lecturador.CodGrupo).First(&models.Grupo{}).Error; err != nil {
-	// 	if errors.Is(err, gorm.ErrRecordNotFound) {
-	// 		http.Error(w, "Grupo no encontrado", http.StatusNotFound)
-	// 		return
-	// 	}
-	// 	tx.Rollback()
-	// 	http.Error(w, "Error al verificar el grupo", http.StatusInternalServerError)
-	// 	return
-	// }
-
-	// Crear el objeto Usuario
 	lecturadorR := models.Usuario{
 		Usuario:  lecturador.Usuario,
 		Rol:      "lecturador",
@@ -382,22 +334,18 @@ func (usuario) AgregarLecturador(w http.ResponseWriter, r *http.Request) {
 		},
 	}
 
-	// Crear la persona en la base de datos
 	if err := tx.Create(*&lecturadorR.Persona).Error; err != nil {
 		tx.Rollback()
 		http.Error(w, "Error al registrar la persona", http.StatusInternalServerError)
 		return
 	}
 
-	// Generar nueva contraseña
 	newPassword, err := password.Generate(6, 2, 0, false, false)
 	if err != nil {
 		http.Error(w, "Error al generar la contraseña", http.StatusInternalServerError)
 		return
 	}
 
-	//print("Contra generada: " + newPassword)
-	// Cifrar la contraseña
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(newPassword), bcrypt.DefaultCost)
 	if err != nil {
 		http.Error(w, "Error al cifrar la contraseña", http.StatusInternalServerError)
@@ -405,7 +353,6 @@ func (usuario) AgregarLecturador(w http.ResponseWriter, r *http.Request) {
 	}
 	lecturadorR.Contra = string(hashedPassword)
 
-	// Asignar el código de persona al usuario y crear el usuario en la base de datos
 	lecturadorR.CodPersona = lecturadorR.Persona.COD
 	if err := tx.Create(&lecturadorR).Error; err != nil {
 		tx.Rollback()
@@ -413,7 +360,6 @@ func (usuario) AgregarLecturador(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Confirmar la transacción
 	tx.Commit()
 	w.Write([]byte(newPassword))
 }
@@ -451,7 +397,6 @@ func (usuario) CambiarCredencialLecturador(w http.ResponseWriter, r *http.Reques
 		return
 	}
 
-	// Actualizar la contraseña del lecturador
 	lecturador.Contra = string(hashedPassword)
 	if err := tx.Save(&lecturador).Error; err != nil {
 		tx.Rollback()
