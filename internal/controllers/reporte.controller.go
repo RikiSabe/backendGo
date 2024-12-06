@@ -461,21 +461,21 @@ func MakePDFLecturacion(codUsuario string) (core.Maroto, error) {
 	}
 
 	// Construir tabla de medidores no lecturados
-	m.AddRows(text.NewRow(10, "Medidores No Lecturados", props.Text{
-		Top:   2,
-		Style: fontstyle.Bold,
-		Size:  14,
-		Align: align.Left,
-	}))
-
-	m.AddRows(row.New(10).Add(
-		text.NewCol(2, "Código", props.Text{Style: fontstyle.Bold, Align: align.Center}),
-		text.NewCol(4, "Nombre", props.Text{Style: fontstyle.Bold, Align: align.Center}),
-		text.NewCol(4, "Propietario", props.Text{Style: fontstyle.Bold, Align: align.Center}),
-		text.NewCol(2, "Estado", props.Text{Style: fontstyle.Bold, Align: align.Center}),
-	))
-
 	if len(medidoresNoLecturados) > 0 {
+
+		m.AddRows(text.NewRow(10, "Medidores No Lecturados", props.Text{
+			Top:   2,
+			Style: fontstyle.Bold,
+			Size:  14,
+			Align: align.Left,
+		}))
+
+		m.AddRows(row.New(10).Add(
+			text.NewCol(2, "Código", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+			text.NewCol(4, "Nombre", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+			text.NewCol(4, "Propietario", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+			text.NewCol(2, "Estado", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		))
 		for _, medidor := range medidoresNoLecturados {
 			m.AddRows(row.New(10).Add(
 				text.NewCol(2, strconv.Itoa(int(medidor.COD)), props.Text{Align: align.Center}),
