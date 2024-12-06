@@ -2,4 +2,4 @@
 .air.toml
 run.sh
 .idea
-.env
+# .env
