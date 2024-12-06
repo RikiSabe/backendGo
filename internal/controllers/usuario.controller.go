@@ -225,6 +225,7 @@ func (usuario) ModificarLecturadorRutaGrupo(w http.ResponseWriter, r *http.Reque
 	tx.Model(models.Usuario{}).Select("cod_ruta", "cod_grupo").Where("cod = ?", lecturador.COD).Updates(lecturador)
 	tx.Commit()
 }
+
 func (usuario) RestablecerContra(w http.ResponseWriter, r *http.Request) {
 	cod := mux.Vars(r)["cod_usuario"]
 	var lecturador models.Usuario

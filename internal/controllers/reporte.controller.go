@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"backend/internal/db"
+	"backend/internal/models"
 	"fmt"
 	"strings"
 	"time"
@@ -58,38 +59,6 @@ func (reporte) CriticaPDF(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getPageHeader() core.Row {
-	return row.New(20).Add(
-		image.NewFromFileCol(22, "internal/images/cosaalt_logo.png", props.Rect{
-			Center:  true,
-			Percent: 80,
-		}),
-	)
-}
-
-func getPageFooter() core.Row {
-	now := time.Now()
-
-	formated := now.Format("02/01/2006 15:04:05")
-
-	return row.New(20).Add(
-		col.New(12).Add(
-			text.New("Generada por Encargado Ricardo Campos", props.Text{
-				Top:   12,
-				Size:  8,
-				Align: align.Left,
-				Color: &props.BlackColor,
-			}),
-			text.New("Fecha y hora: "+formated, props.Text{
-				Top:   16,
-				Size:  8,
-				Align: align.Left,
-				Color: &props.BlackColor,
-			}),
-		),
-	)
-}
-
 func MakePDFCritica() (core.Maroto, error) {
 	mrt := maroto.New()
 	m := maroto.NewMetricsDecorator(mrt)
@@ -106,8 +75,9 @@ func MakePDFCritica() (core.Maroto, error) {
 		log.Fatal(err.Error())
 	}
 
-	m.AddRows(text.NewRow(20, "Reporte Criticas", props.Text{
+	m.AddRows(text.NewRow(22, "Reporte Criticas", props.Text{
 		Top:   3,
+		Size:  20,
 		Style: fontstyle.Bold,
 		Align: align.Center,
 	}))
@@ -134,22 +104,22 @@ type critica struct {
 }
 
 func (o critica) GetHeader() core.Row {
-	return row.New(10).Add(
-		text.NewCol(1, "N°", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(1, "COD", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(6, "DESCRIPCION", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(2, "TIPO", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(1, "ESTADO", props.Text{Style: fontstyle.Bold}),
+	return row.New(8).Add(
+		// text.NewCol(1, "N°", props.Text{Style: fontstyle.Bold}),
+		text.NewCol(1, "COD", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(6, "DESCRIPCION", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(3, "TIPO", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(1, "ESTADO", props.Text{Style: fontstyle.Bold, Align: align.Center}),
 	)
 }
 
 func (o critica) GetContent(i int) core.Row {
-	r := row.New(10).Add(
-		text.NewCol(1, strconv.Itoa(i+1)), // Agregar el índice (N°)
-		text.NewCol(1, strconv.FormatUint(uint64(o.COD), 10)),
+	r := row.New(8).Add(
+		// text.NewCol(1, strconv.Itoa(i+1)), // Agregar el índice (N°)
+		text.NewCol(1, strconv.FormatUint(uint64(o.COD), 10), props.Text{Align: align.Center}),
 		text.NewCol(6, o.Descripcion),
-		text.NewCol(2, o.Tipo),
-		text.NewCol(1, o.Estado),
+		text.NewCol(3, o.Tipo, props.Text{Align: align.Center}),
+		text.NewCol(1, o.Estado, props.Text{Align: align.Center}),
 	)
 
 	if i%2 == 0 {
@@ -201,10 +171,11 @@ func MakePDFLecturadores() (core.Maroto, error) {
 		log.Fatal(err.Error())
 	}
 
-	m.AddRows(text.NewRow(20, "Reporte Lecturadores", props.Text{
+	m.AddRows(text.NewRow(22, "Reporte Lecturadores", props.Text{
 		Top:   3,
 		Style: fontstyle.Bold,
 		Align: align.Center,
+		Size:  20,
 	}))
 
 	var lista []lecturador
@@ -236,24 +207,24 @@ type lecturador struct {
 }
 
 func (o lecturador) GetHeader() core.Row {
-	return row.New(10).Add(
-		text.NewCol(1, "N°", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(2, "COD", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(2, "USUARIO", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(2, "NOMBRE", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(2, "APELLIDO", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(2, "CEDULA DE IDENTIDAD", props.Text{Style: fontstyle.Bold}),
+	return row.New(8).Add(
+		text.NewCol(1, "N°", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		// text.NewCol(2, "COD", props.Text{Style: fontstyle.Bold}),
+		text.NewCol(3, "USUARIO", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(3, "NOMBRE", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(3, "APELLIDO", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(2, "CEDULA DE IDENTIDAD", props.Text{Style: fontstyle.Bold, Align: align.Center}),
 	)
 }
 
 func (o lecturador) GetContent(i int) core.Row {
-	r := row.New(6).Add(
-		text.NewCol(1, strconv.Itoa(i+1)),
-		text.NewCol(2, strconv.FormatUint(uint64(o.COD), 10)),
-		text.NewCol(2, o.Usuario),
-		text.NewCol(2, o.Nombre),
-		text.NewCol(2, o.Apellido),
-		text.NewCol(2, o.CI),
+	r := row.New(8).Add(
+		text.NewCol(1, strconv.Itoa(i+1), props.Text{Align: align.Center}),
+		// text.NewCol(2, strconv.FormatUint(uint64(o.COD), 10)),
+		text.NewCol(3, o.Usuario, props.Text{Align: align.Center}),
+		text.NewCol(3, o.Nombre, props.Text{Align: align.Center}),
+		text.NewCol(3, o.Apellido, props.Text{Align: align.Center}),
+		text.NewCol(2, o.CI, props.Text{Align: align.Center}),
 	)
 
 	if i%2 == 0 {
@@ -305,8 +276,9 @@ func MakePDFMedidores() (core.Maroto, error) {
 		log.Fatal(err.Error())
 	}
 
-	m.AddRows(text.NewRow(20, "Reporte Medidores", props.Text{
+	m.AddRows(text.NewRow(22, "Reporte Medidores", props.Text{
 		Top:   3,
+		Size:  20,
 		Style: fontstyle.Bold,
 		Align: align.Center,
 	}))
@@ -338,22 +310,22 @@ type medidorRuta struct {
 }
 
 func (o medidorRuta) GetHeader() core.Row {
-	return row.New(10).Add(
-		text.NewCol(1, "N°", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(3, "Medidor", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(3, "Propietario", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(2, "Ruta", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(2, "Zona", props.Text{Style: fontstyle.Bold}),
+	return row.New(8).Add(
+		text.NewCol(1, "N°", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(3, "Medidor", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(3, "Propietario", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(2, "Ruta", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(2, "Zona", props.Text{Style: fontstyle.Bold, Align: align.Center}),
 	)
 }
 
 func (o medidorRuta) GetContent(i int) core.Row {
-	r := row.New(6).Add(
-		text.NewCol(1, strconv.Itoa(i+1)),
-		text.NewCol(3, o.MedidorNombre),
-		text.NewCol(3, o.Propietario),
-		text.NewCol(2, o.RutaNombre),
-		text.NewCol(2, o.Zona),
+	r := row.New(8).Add(
+		text.NewCol(1, strconv.Itoa(i+1), props.Text{Align: align.Center}),
+		text.NewCol(3, o.MedidorNombre, props.Text{Align: align.Center}),
+		text.NewCol(3, o.Propietario, props.Text{Align: align.Center}),
+		text.NewCol(2, o.RutaNombre, props.Text{Align: align.Center}),
+		text.NewCol(2, o.Zona, props.Text{Align: align.Center}),
 	)
 
 	if i%2 == 0 {
@@ -401,6 +373,137 @@ func MakePDFLecturacion(codUsuario string) (core.Maroto, error) {
 	}
 
 	m.RegisterFooter(getPageFooter())
+
+	var nombreUsuario string
+	err = db.GDB.Raw("SELECT usuario FROM usuario WHERE cod = ? LIMIT 1", codUsuario).Scan(&nombreUsuario).Error
+	if err != nil {
+		return nil, err
+	}
+
+	titulo := "Reporte de lecturaciones del usuario: " + nombreUsuario
+	m.AddRows(text.NewRow(22, titulo, props.Text{
+		Top:   3,
+		Style: fontstyle.Bold,
+		Size:  18,
+		Align: align.Center,
+	}))
+
+	// Obtener medidores a través de los grupos y rutas
+	var medidores []models.Medidor
+	queryMedidores := `
+		SELECT m.*
+		FROM medidor m
+		INNER JOIN ruta r ON m.cod_ruta = r.cod
+		INNER JOIN grupo g ON g.cod_ruta = r.cod
+		WHERE g.cod_usuario = ?
+	`
+	if err := db.GDB.Raw(queryMedidores, codUsuario).Scan(&medidores).Error; err != nil {
+		return nil, err
+	}
+
+	if len(medidores) == 0 {
+		return nil, fmt.Errorf("no se encontraron medidores para el usuario con código %s", codUsuario)
+	}
+
+	// Obtener lecturaciones realizadas
+	var lecturacionesRealizadas []Lecturacion
+	queryLecturaciones := `
+		SELECT l.cod_medidor, m.nombre AS nombre_medidor, l.medicion, l.hora, l.fecha
+		FROM lecturacion l
+		INNER JOIN medidor m ON l.cod_medidor = m.cod
+		INNER JOIN grupo g ON g.cod_usuario = ?
+		WHERE l.cod_medidor IN (
+			SELECT cod 
+			FROM medidor 
+			WHERE cod_ruta IN (
+				SELECT cod_ruta 
+				FROM grupo 
+				WHERE cod_usuario = ?
+			)
+		)
+		ORDER BY l.fecha, l.hora
+	`
+	if err := db.GDB.Raw(queryLecturaciones, codUsuario, codUsuario).Scan(&lecturacionesRealizadas).Error; err != nil {
+		return nil, err
+	}
+
+	// Filtrar medidores no lecturados
+	medidoresLecturados := make(map[uint]bool)
+	for _, l := range lecturacionesRealizadas {
+		medidoresLecturados[l.CodMedidor] = true
+	}
+
+	var medidoresNoLecturados []models.Medidor
+	for _, medidor := range medidores {
+		if !medidoresLecturados[medidor.COD] {
+			medidoresNoLecturados = append(medidoresNoLecturados, medidor)
+		}
+	}
+
+	// Construir tabla de lecturaciones realizadas
+	m.AddRows(text.NewRow(10, "Lecturaciones Realizadas", props.Text{
+		Style: fontstyle.Bold,
+		Size:  14,
+		Align: align.Left,
+	}))
+
+	if len(lecturacionesRealizadas) > 0 {
+		rows, err := list.Build[Lecturacion](lecturacionesRealizadas)
+		if err != nil {
+			log.Fatal(err.Error())
+		}
+		m.AddRows(rows...)
+	} else {
+		m.AddRows(text.NewRow(10, "No se encontraron lecturaciones realizadas.", props.Text{
+			Align: align.Left,
+			Size:  10,
+		}))
+	}
+
+	// Construir tabla de medidores no lecturados
+	m.AddRows(text.NewRow(10, "Medidores No Lecturados", props.Text{
+		Top:   2,
+		Style: fontstyle.Bold,
+		Size:  14,
+		Align: align.Left,
+	}))
+
+	m.AddRows(row.New(10).Add(
+		text.NewCol(2, "Código", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(4, "Nombre", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(4, "Propietario", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(2, "Estado", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+	))
+
+	if len(medidoresNoLecturados) > 0 {
+		for _, medidor := range medidoresNoLecturados {
+			m.AddRows(row.New(10).Add(
+				text.NewCol(2, strconv.Itoa(int(medidor.COD)), props.Text{Align: align.Center}),
+				text.NewCol(4, medidor.Nombre, props.Text{Align: align.Center}),
+				text.NewCol(4, medidor.Propietario, props.Text{Align: align.Center}),
+				text.NewCol(2, medidor.Estado, props.Text{Align: align.Center}),
+			))
+		}
+	} else {
+		m.AddRows(text.NewRow(10, "Todos los medidores tienen lecturaciones realizadas.", props.Text{
+			Align: align.Left,
+			Size:  10,
+		}))
+	}
+
+	return m, nil
+}
+
+func MakePDFLecturacion2(codUsuario string) (core.Maroto, error) {
+	mrt := maroto.New()
+	m := maroto.NewMetricsDecorator(mrt)
+
+	err := m.RegisterHeader(getPageHeader())
+	if err != nil {
+		log.Fatal(err.Error())
+	}
+
+	m.RegisterFooter(getPageFooter())
 	if err != nil {
 		log.Fatal(err.Error())
 	}
@@ -413,9 +516,10 @@ func MakePDFLecturacion(codUsuario string) (core.Maroto, error) {
 
 	titulo := "Reporte de lecturaciones del usuario: " + nombreUsuario
 
-	m.AddRows(text.NewRow(20, titulo, props.Text{
+	m.AddRows(text.NewRow(22, titulo, props.Text{
 		Top:   3,
 		Style: fontstyle.Bold,
+		Size:  18,
 		Align: align.Center,
 	}))
 
@@ -455,21 +559,21 @@ type Lecturacion struct {
 
 func (l Lecturacion) GetHeader() core.Row {
 	return row.New(10).Add(
-		text.NewCol(2, "Código Medidor", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(4, "Nombre Medidor", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(2, "Medición", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(2, "Hora", props.Text{Style: fontstyle.Bold}),
-		text.NewCol(2, "Fecha", props.Text{Style: fontstyle.Bold}),
+		text.NewCol(2, "Código Medidor", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(4, "Nombre Medidor", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(2, "Medición", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(2, "Hora", props.Text{Style: fontstyle.Bold, Align: align.Center}),
+		text.NewCol(2, "Fecha", props.Text{Style: fontstyle.Bold, Align: align.Center}),
 	)
 }
 
 func (l Lecturacion) GetContent(i int) core.Row {
 	r := row.New(10).Add(
-		text.NewCol(2, strconv.Itoa(int(l.CodMedidor))),
-		text.NewCol(4, l.NombreMedidor),
-		text.NewCol(2, strconv.Itoa(int(*l.Medicion))),
-		text.NewCol(2, l.Hora.String()),
-		text.NewCol(2, strings.Split(l.Fecha, "T")[0]),
+		text.NewCol(2, strconv.Itoa(int(l.CodMedidor)), props.Text{Align: align.Center}),
+		text.NewCol(4, l.NombreMedidor, props.Text{Align: align.Center}),
+		text.NewCol(2, strconv.Itoa(int(*l.Medicion)), props.Text{Align: align.Center}),
+		text.NewCol(2, l.Hora.String(), props.Text{Align: align.Center}),
+		text.NewCol(2, strings.Split(l.Fecha, "T")[0], props.Text{Align: align.Center}),
 	)
 
 	if i%2 == 0 {
@@ -478,4 +582,52 @@ func (l Lecturacion) GetContent(i int) core.Row {
 		})
 	}
 	return r
+}
+
+func getPageHeader() core.Row {
+	return row.New(20).Add(
+		image.NewFromFileCol(2, "internal/images/cosaalt_logo.png", props.Rect{
+			Center:  true,
+			Percent: 80,
+		}),
+		col.New(6),
+		col.New(4).Add(
+			text.New("Cooperativa de Servicios Públicos de Agua Potable y Alcantarillado Sanitario Tarija", props.Text{
+				Top:   3,
+				Size:  8,
+				Style: fontstyle.Italic,
+				Align: align.Right,
+				Color: &props.BlackColor,
+			}),
+			text.New("TARIJA - BOLIVIA", props.Text{
+				Top:   12,
+				Size:  8,
+				Align: align.Right,
+				Color: &props.BlackColor,
+			}),
+		),
+	)
+}
+
+func getPageFooter() core.Row {
+	now := time.Now()
+
+	formated := now.Format("02/01/2006 15:04:05")
+
+	return row.New(20).Add(
+		col.New(12).Add(
+			text.New("Generada por Encargado Ricardo Campos", props.Text{
+				Top:   12,
+				Size:  8,
+				Align: align.Left,
+				Color: &props.BlackColor,
+			}),
+			text.New("Fecha y hora: "+formated, props.Text{
+				Top:   16,
+				Size:  8,
+				Align: align.Left,
+				Color: &props.BlackColor,
+			}),
+		),
+	)
 }
