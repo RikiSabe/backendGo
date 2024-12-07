@@ -40,16 +40,19 @@ func endPointsAPI(api *mux.Router) {
 	v1Medidores.HandleFunc("", c.AgregarMedidor).Methods(http.MethodPost)
 	v1Medidores.HandleFunc("/{cod}", c.ModificarMedidor).Methods(http.MethodPut)
 	v1Medidores.HandleFunc("/{cod}", c.EliminarMedidor).Methods(http.MethodDelete)
+	v1Medidores.HandleFunc("/byrutaweb/{cod_ruta}", c.ObtenerMedidoresByRutaweb).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("/byruta/{cod_ruta}", c.ObtenerMedidoresByRuta).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("/direcciones/{cod_ruta}", c.ObtenerDireccionMedidores).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("/direccion/{cod_direccion}", c.ObtenerDireccion).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("/direccion/modificar/{cod_direccion}", c.ModificarDireccion).Methods(http.MethodPut)
+	v1Medidores.HandleFunc("/estadisticas/{cod_ruta}", c.ObtenerEstadisticasMedidoresRuta).Methods(http.MethodGet)
 
 	// v1 Lecturaciones
 	v1Lecturaciones.HandleFunc("/pdf/{codUsuario}", c.Reporte.LecturacionPDF).Methods(http.MethodGet)
 	v1Lecturaciones.HandleFunc("", c.ObtenerLecturaciones).Methods(http.MethodGet)
 	v1Lecturaciones.HandleFunc("/{cod}", c.ObtenerLecturacion).Methods(http.MethodGet)
 	v1Lecturaciones.HandleFunc("", c.CrearLecturacion).Methods(http.MethodPost)
+	v1Lecturaciones.HandleFunc("/historial/{cod_ruta}", c.ObtenerHistorialLecturaciones).Methods(http.MethodGet)
 
 	// v1 Criticas
 	v1Criticas.HandleFunc("/pdf", c.Reporte.CriticaPDF).Methods(http.MethodGet)

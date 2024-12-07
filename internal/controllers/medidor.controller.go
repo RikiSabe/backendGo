@@ -66,6 +66,51 @@ func ObtenerMedidoresByRuta(w http.ResponseWriter, r *http.Request) {
 	var medidores []struct {
 		CodMedidor  uint    `json:"codMedidor"`
 		Estado      string  `json:"estado"`
+		Nombre      string  `json:"nombre"`
+		Propietario string  `json:"propietario"`
+		CodRuta     uint    `json:"codRuta"`
+		Latitud     float32 `json:"latitud,omitempty"`
+		Longitud    float32 `json:"longitud,omitempty"`
+	}
+
+	codigoRuta := mux.Vars(r)["cod_ruta"]
+
+	// Consulta ajustada para excluir medidores ya lecturados
+	query := `
+		SELECT m.cod as cod_medidor, m.estado, m.nombre, m.propietario, m.cod_ruta, 
+			   d.longitud, d.latitud
+		FROM medidor m
+		LEFT JOIN direccion d ON m.cod_direccion = d.cod
+		WHERE m.cod_ruta = ? AND m.estado = 'activo'
+		AND NOT EXISTS (
+			SELECT 1
+			FROM lecturacion l
+			WHERE l.cod_medidor = m.cod AND l.cod_ruta = m.cod_ruta
+		);`
+
+	tx := db.GDB.Begin()
+	if err := tx.Raw(query, codigoRuta).Scan(&medidores).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	tx.Commit()
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(&medidores); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
+func ObtenerMedidoresByRutaweb(w http.ResponseWriter, r *http.Request) {
+	// Estructura que combina los datos de Medidor y las coordenadas de Direccion
+	var medidores []struct {
+		CodMedidor  uint    `json:"codMedidor"`
+		Estado      string  `json:"estado"`
 		Medicion    int     `json:"medicion"`
 		Nombre      string  `json:"nombre"`
 		Propietario string  `json:"propietario"`
@@ -342,6 +387,44 @@ func ModificarDireccion(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	if err := json.NewEncoder(w).Encode(&direccionExistente); err != nil {
 		http.Error(w, "Error al codificar JSON", http.StatusInternalServerError)
+		return
+	}
+}
+
+func ObtenerEstadisticasMedidoresRuta(w http.ResponseWriter, r *http.Request) {
+	type Estadisticas struct {
+		TotalMedidores      int `json:"totalMedidores"`
+		MedidoresLecturados int `json:"medidoresLecturados"`
+	}
+
+	var estadisticas Estadisticas
+	codigoRuta := mux.Vars(r)["cod_ruta"]
+
+	query := `
+		SELECT 
+			(SELECT COUNT(*) 
+			 FROM medidor 
+			 WHERE cod_ruta = ? AND estado = 'activo') AS total_medidores,
+			(SELECT COUNT(*) 
+			 FROM lecturacion l
+			 INNER JOIN medidor m ON l.cod_medidor = m.cod
+			 WHERE m.cod_ruta = ?) AS medidores_lecturados;
+	`
+
+	tx := db.GDB.Begin()
+	if err := tx.Raw(query, codigoRuta, codigoRuta).Scan(&estadisticas).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	tx.Commit()
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(&estadisticas); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
 }

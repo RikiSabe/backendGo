@@ -44,6 +44,38 @@ func ObtenerLecturacion(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func ObtenerHistorialLecturaciones(w http.ResponseWriter, r *http.Request) {
+	var lecturaciones []struct {
+		NombreMedidor string `json:"nombre_medidor"`
+		Hora          string `json:"hora"`
+		Fecha         string `json:"fecha"`
+	}
+
+	codRuta := mux.Vars(r)["cod_ruta"]
+
+	query := `SELECT m.nombre AS nombre_medidor, l.hora AS hora, l.fecha as fecha
+				FROM lecturacion AS l
+				LEFT JOIN medidor AS m ON l.cod_medidor = m.cod
+				WHERE m.cod_ruta = ?`
+
+	tx := db.GDB.Begin()
+	if err := tx.Raw(query, codRuta).Scan(&lecturaciones).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			w.WriteHeader(http.StatusNotFound)
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+	tx.Commit()
+
+	w.WriteHeader(http.StatusOK)
+	if err := json.NewEncoder(w).Encode(&lecturaciones); err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		return
+	}
+}
+
 func SubirLecturacion(w http.ResponseWriter, r *http.Request) {
 	var lecturacion models.Lecturacion
 	if err := json.NewDecoder(r.Body).Decode(&lecturacion); err != nil {
