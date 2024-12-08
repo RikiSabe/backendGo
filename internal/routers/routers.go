@@ -35,6 +35,7 @@ func endPointsAPI(api *mux.Router) {
 	v1Medidores.HandleFunc("/pdf", c.Reporte.MedidoresPDF).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("/cantidad", c.CantidadMedidores).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("/cantidad-diaria/{cod}", c.CantidadMedidoresbyLecturador).Methods(http.MethodGet)
+	v1Medidores.HandleFunc("/ubicacionesmedidores", c.ObtenerUbicacionesMedidores).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("", c.ObtenerMedidores).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("/{cod}", c.ObtenerMedidor).Methods(http.MethodGet)
 	v1Medidores.HandleFunc("", c.AgregarMedidor).Methods(http.MethodPost)

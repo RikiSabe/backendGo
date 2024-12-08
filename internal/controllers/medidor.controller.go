@@ -61,6 +61,35 @@ func ObtenerMedidores(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+func ObtenerUbicacionesMedidores(w http.ResponseWriter, r *http.Request) {
+	var medidores []struct {
+		Nombre      string  `json:"nombre"`
+		Propietario string  `json:"propietario"`
+		Latitud     float64 `json:"latitud,omitempty"`  // Cambiado a float64
+		Longitud    float64 `json:"longitud,omitempty"` // Cambiado a float64
+	}
+
+	query := `
+		SELECT m.nombre, m.propietario, d.longitud, d.latitud
+		FROM medidor m
+		LEFT JOIN direccion d ON m.cod_direccion = d.cod
+		WHERE m.estado = 'activo'
+		ORDER BY m.nombre
+	`
+
+	// Consultar directamente sin transacción
+	if err := db.GDB.Raw(query).Scan(&medidores).Error; err != nil {
+		http.Error(w, "Error al consultar los datos", http.StatusInternalServerError)
+		return
+	}
+
+	// Respuesta HTTP
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(medidores); err != nil {
+		http.Error(w, "Error al codificar la respuesta", http.StatusInternalServerError)
+	}
+}
+
 func ObtenerMedidoresByRuta(w http.ResponseWriter, r *http.Request) {
 	// Estructura que combina los datos de Medidor y las coordenadas de Direccion
 	var medidores []struct {
